@@ -85,6 +85,20 @@ const UserController = {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
+  },
+
+  requestPasswordRecovery: async (req, res) => {
+    try {
+      const { email } = req.body;
+      const result = await UserService.requestPasswordRecovery(email);
+      if (result.success) {
+        res.status(200).json(result.user);
+      } else {
+        res.status(404).json({ error: result.message });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

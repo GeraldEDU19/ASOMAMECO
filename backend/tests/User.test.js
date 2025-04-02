@@ -1,6 +1,14 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const UserService = require("../services/UserService");
+
+// Mock para evitar envíos reales de email durante los tests
+jest.mock("../utils/sendEmail", () => {
+  return jest.fn((to, subject, text) =>
+    Promise.resolve({ messageId: "test-message-id", info: "Email sent successfully" })
+  );
+});
 
 // Helper function to compare values and log expected vs received on mismatch
 function assertEqual(received, expected, message) {
@@ -17,13 +25,13 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Create a new session and start a transaction for each test
+  // Crear una nueva sesión y comenzar una transacción para cada test
   session = await mongoose.startSession();
   session.startTransaction();
 });
 
 afterEach(async () => {
-  // Rollback the transaction to revert any changes done during the test
+  // Revertir la transacción para deshacer cualquier cambio realizado durante el test
   await session.abortTransaction();
   session.endSession();
 });
@@ -33,7 +41,7 @@ afterAll(async () => {
 });
 
 describe("User Service Tests", () => {
-  // --- Original Tests ---
+  // --- Tests de Métodos Existentes ---
   it("Should register a user successfully", async () => {
     const response = await UserService.register(
       { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
@@ -119,7 +127,7 @@ describe("User Service Tests", () => {
     assertEqual(updateResponse.message, "User not found", "Non-existing user update message");
   });
 
-  // --- Additional Tests ---
+  // --- Tests Adicionales de Métodos Existentes ---
   it("Should fail registration when name is missing", async () => {
     const response = await UserService.register(
       { email: "noname@example.com", password: "securepassword" },
@@ -195,20 +203,19 @@ describe("User Service Tests", () => {
     assertEqual(response.users.length, 2, "Should find two users with domain multitest.com");
   });
 
-  // --- New Test for Changing Password using a Separate Service ---
   it("Should update user's password successfully using changePassword", async () => {
     const regResponse = await UserService.register(
       { name: "User Password Update", email: "passwordupdate@example.com", password: "oldpassword" },
       session
     );
     const user = regResponse.user;
-    // Use changePassword instead of update to properly re-hash the new password
+    // Cambiar contraseña
     const changeResponse = await UserService.changePassword(user._id, "newpassword", session);
     assertEqual(changeResponse.success, true, "Change password should succeed");
-    // Attempt login with new password should succeed
+    // Intentar login con la nueva contraseña
     const loginNew = await UserService.login("passwordupdate@example.com", "newpassword", session);
     assertEqual(loginNew.success, true, "Login with new password should succeed");
-    // Attempt login with old password should fail
+    // Intentar login con la contraseña antigua
     const loginOld = await UserService.login("passwordupdate@example.com", "oldpassword", session);
     assertEqual(loginOld.success, false, "Login with old password should fail");
   });
@@ -222,5 +229,61 @@ describe("User Service Tests", () => {
     const updateResponse = await UserService.update(user._id, {}, session);
     assertEqual(updateResponse.success, true, "Update with empty data should succeed");
     assertEqual(updateResponse.user.name, "User Invalid Update", "User name should remain unchanged");
+  });
+
+  // --- Tests para los Nuevos Servicios de Recuperación y Reseteo de Contraseña ---
+  describe("Password Recovery Services", () => {
+    it("Should fail password recovery request for non-existing user", async () => {
+      const response = await UserService.requestPasswordRecovery("nonexistent@example.com", session);
+      assertEqual(response.success, false, "Recovery should fail for non-existing user");
+      assertEqual(response.message, "Usuario no encontrado", "Proper error message for non-existing user");
+    });
+
+    it("Should send password recovery email for existing user", async () => {
+      // Registrar un usuario para la recuperación
+      const regResponse = await UserService.register(
+        { name: "Recovery Test", email: "recovery@example.com", password: "securepassword" },
+        session
+      );
+      assertEqual(regResponse.success, true, "Registration for password recovery");
+      // Solicitar recuperación
+      const recoveryResponse = await UserService.requestPasswordRecovery("recovery@example.com", session);
+      assertEqual(recoveryResponse.success, true, "Password recovery email should be sent");
+      assertEqual(
+        recoveryResponse.message,
+        "Correo de recuperación enviado",
+        "Password recovery success message"
+      );
+    });
+
+    it("Should reset the password using a valid token", async () => {
+      // Registrar un usuario para resetear la contraseña
+      const regResponse = await UserService.register(
+        { name: "Reset Test", email: "reset@example.com", password: "oldpassword" },
+        session
+      );
+      assertEqual(regResponse.success, true, "Registration for reset password");
+      const user = regResponse.user;
+      // Para testear el reset, generamos un token siguiendo la lógica del service
+      const fullDate = new Date();
+      const payload = { id: user._id, date: fullDate.toISOString() };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+      // Resetear la contraseña utilizando el token generado
+      const resetResponse = await UserService.resetPassword(token, "newpassword", session);
+      assertEqual(resetResponse.success, true, "Password reset should succeed");
+      // Intentar login con la nueva contraseña
+      const loginNew = await UserService.login("reset@example.com", "newpassword", session);
+      assertEqual(loginNew.success, true, "Login with new password should succeed");
+      // Intentar login con la contraseña antigua, debe fallar
+      const loginOld = await UserService.login("reset@example.com", "oldpassword", session);
+      assertEqual(loginOld.success, false, "Login with old password should fail");
+    });
+
+    it("Should fail password reset with invalid token", async () => {
+      const invalidToken = "invalidtoken";
+      const resetResponse = await UserService.resetPassword(invalidToken, "newpassword", session);
+      assertEqual(resetResponse.success, false, "Password reset with invalid token should fail");
+      assertEqual(resetResponse.message, "Token inválido o expirado", "Proper error message for invalid token");
+    });
   });
 });
