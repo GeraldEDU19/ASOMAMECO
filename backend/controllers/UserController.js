@@ -99,6 +99,20 @@ const UserController = {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
+  },
+
+  resetPassword: async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      const result = await UserService.resetPassword(token, newPassword);
+      if (result.success) {
+        res.status(200).json(result.user);
+      } else {
+        res.status(404).json({ error: result.message });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

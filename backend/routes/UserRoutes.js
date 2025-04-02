@@ -10,5 +10,6 @@ router.put("/:id/change-password", UserController.changePassword);
 router.delete("/:id", UserController.deactivate);
 router.get("/search", UserController.search);
 router.post("/request-pasword-recovery", UserController.requestPasswordRecovery);
+router.post("/reset-password", UserController.resetPassword);
 
 module.exports = router;
