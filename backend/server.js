@@ -1,11 +1,12 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-
 const app = express();
+const cors = require('cors');
 
 // Middleware to parse JSON requests
 app.use(express.json());
+app.use(cors());
 
 // Connect to MongoDB using the connection string from the .env file
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })

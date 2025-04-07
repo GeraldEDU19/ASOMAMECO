@@ -2,7 +2,7 @@
 
 const nodemailer = require('nodemailer');
 
-async function sendEmail(to, subject, text) {
+async function sendEmail(to, subject, htmlContent) {
   // Configuración del transporter para Gmail
   let transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -17,7 +17,7 @@ async function sendEmail(to, subject, text) {
     from: process.env.GMAIL_USER, // Remitente
     to,                          // Destinatario
     subject,                     // Asunto
-    text,                        // Contenido del mensaje (puedes usar html en lugar de text si lo prefieres)
+    html: htmlContent,                        // Contenido del mensaje (puedes usar html en lugar de text si lo prefieres)
   };
 
   // Enviar el correos

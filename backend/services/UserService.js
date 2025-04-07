@@ -1,8 +1,8 @@
-const User = require("../models/User");
-const bcrypt = require("bcrypt");
-const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const sendEmail = require("../utils/sendEmail");
+const User = require('../models/User');
+const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail');
 
 class UserService {
   static async register(userData, session = null) {
@@ -27,11 +27,13 @@ class UserService {
     if (!session) currentSession.startTransaction();
 
     try {
-      const user = await User.findOne({ email, active: true }).session(currentSession);
-      if (!user) return { success: false, message: "Invalid credentials" };
+      const user = await User.findOne({ email, active: true }).session(
+        currentSession
+      );
+      if (!user) return { success: false, message: 'Invalid credentials' };
 
       const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) return { success: false, message: "Invalid credentials" };
+      if (!isMatch) return { success: false, message: 'Invalid credentials' };
 
       if (!session) await currentSession.commitTransaction();
       return { success: true, user };
@@ -48,8 +50,12 @@ class UserService {
     if (!session) currentSession.startTransaction();
 
     try {
-      const user = await User.findByIdAndUpdate(userId, { active: false }, { new: true, session: currentSession });
-      if (!user) return { success: false, message: "User not found" };
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { active: false },
+        { new: true, session: currentSession }
+      );
+      if (!user) return { success: false, message: 'User not found' };
 
       if (!session) await currentSession.commitTransaction();
       return { success: true, user };
@@ -82,8 +88,11 @@ class UserService {
     if (!session) currentSession.startTransaction();
 
     try {
-      const user = await User.findByIdAndUpdate(userId, updateData, { new: true, session: currentSession });
-      if (!user) return { success: false, message: "User not found" };
+      const user = await User.findByIdAndUpdate(userId, updateData, {
+        new: true,
+        session: currentSession,
+      });
+      if (!user) return { success: false, message: 'User not found' };
 
       if (!session) await currentSession.commitTransaction();
       return { success: true, user };
@@ -101,7 +110,7 @@ class UserService {
 
     try {
       const user = await User.findById(userId).session(currentSession);
-      if (!user) return { success: false, message: "User not found" };
+      if (!user) return { success: false, message: 'User not found' };
       // Asignamos la nueva contraseña. Con el pre-save se re-hasheará automáticamente.
       user.password = newPassword;
       await user.save({ session: currentSession });
@@ -121,32 +130,51 @@ class UserService {
 
     try {
       // Verificar que el usuario exista y esté activo
-      const user = await User.findOne({ email, active: true }).session(currentSession);
+      const user = await User.findOne({ email, active: true }).session(
+        currentSession
+      );
       if (!user) {
         if (!session) await currentSession.abortTransaction();
-        return { success: false, message: "Usuario no encontrado" };
+        return { success: false, message: 'Usuario no encontrado' };
       }
 
       // Generar el JWT utilizando el id del usuario y la fecha actual completa
       const fullDate = new Date();
       const payload = {
         id: user._id,
-        date: fullDate.toISOString() // Ejemplo: "2025-04-01T12:34:56.789Z"
+        date: fullDate.toISOString(), // Ejemplo: "2025-04-01T12:34:56.789Z"
       };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: '24h',
+      });
 
       // Construir el link de recuperación: FE_URL + '/recovery-password/' + token
-      const recoveryLink = `${process.env.FE_URL}/recovery-password/${token}`;
+      const recoveryLink = `${process.env.FE_URL}recovery-password/${token}`;
 
       // Enviar el correo con el link de recuperación
       await sendEmail(
         user.email,
         'Recuperación de Contraseña',
-        `Haz clic en el siguiente enlace para restablecer tu contraseña: ${recoveryLink}`
+        `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
+      <h2 style="color: #4CAF50;">Recuperación de Contraseña</h2>
+      <p>Hola ${user.name || 'Usuario'},</p>
+      <p>Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para continuar con el proceso:</p>
+      <a 
+        href="${recoveryLink}" 
+        style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;"
+      >
+        Restablecer Contraseña
+      </a>
+      <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+      <p>Gracias,</p>
+      <p><strong>El equipo de ASOMAMECO</strong></p>
+    </div>
+  `
       );
 
       if (!session) await currentSession.commitTransaction();
-      return { success: true, message: "Correo de recuperación enviado" };
+      return { success: true, message: 'Correo de recuperación enviado' };
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
       return { success: false, message: error.message };
@@ -165,17 +193,25 @@ class UserService {
       const userId = decoded.id;
 
       // Actualizar la contraseña del usuario usando el método changePassword
-      const result = await this.changePassword(userId, newPassword, currentSession);
+      const result = await this.changePassword(
+        userId,
+        newPassword,
+        currentSession
+      );
       if (!result.success) {
         if (!session) await currentSession.abortTransaction();
         return { success: false, message: result.message };
       }
 
       if (!session) await currentSession.commitTransaction();
-      return { success: true, message: "Contraseña actualizada correctamente", user: result.user };
+      return {
+        success: true,
+        message: 'Contraseña actualizada correctamente',
+        user: result.user,
+      };
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
-      return { success: false, message: "Token inválido o expirado" };
+      return { success: false, message: 'Token inválido o expirado' };
     } finally {
       if (!session) currentSession.endSession();
     }
