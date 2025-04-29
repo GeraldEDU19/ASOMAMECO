@@ -1,0 +1,44 @@
+{
+  "info": {
+    "_postman_id": "f1a2b3c4-d5e6-7890-abcd-ef1234567890",
+    "name": "Affiliate",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Affiliate",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"externalId\": \"AFF001\",\n  \"firstName\": \"Juan\",\n  \"secondName\": \"Carlos\",\n  \"firstLastName\": \"Pérez\",\n  \"secondLastName\": \"Gómez\",\n  \"email\": \"juan.perez@example.com\",\n  \"telephoneNumber\": \"88881234\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/affiliate?update=false",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "affiliate"
+          ],
+          "query": [
+            {
+              "key": "update",
+              "value": "false"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

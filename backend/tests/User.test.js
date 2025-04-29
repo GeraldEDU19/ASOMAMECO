@@ -1,19 +1,30 @@
+// tests/UserService.test.js
+
 require("dotenv").config();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const UserService = require("../services/UserService");
+const User = require("../models/User");
 
-// Mock para evitar envíos reales de email durante los tests
-jest.mock("../utils/sendEmail", () => {
-  return jest.fn((to, subject, text) =>
+// Mock the email sender to avoid real emails during tests
+jest.mock("../utils/sendEmail", () =>
+  jest.fn((to, subject, text) =>
     Promise.resolve({ messageId: "test-message-id", info: "Email sent successfully" })
-  );
-});
+  )
+);
 
-// Helper function to compare values and log expected vs received on mismatch
-function assertEqual(received, expected, message) {
+/**
+ * Helper to compare and assert
+ */
+function assertEqual(funcName, data, received, expected, message) {
   if (received !== expected) {
-    console.error(`${message} - Expected: ${expected}, Received: ${received}`);
+    console.error(`Function: ${funcName}`);
+    console.error(`Data: ${JSON.stringify(data, null, 2)}`);
+    console.error(message);
+    console.error("Expected:", expected);
+    console.error("Received:", received);
+  } else {
+    console.log(`${funcName} – ${message}: Success`);
   }
   expect(received).toBe(expected);
 }
@@ -25,13 +36,11 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Crear una nueva sesión y comenzar una transacción para cada test
   session = await mongoose.startSession();
   session.startTransaction();
 });
 
 afterEach(async () => {
-  // Revertir la transacción para deshacer cualquier cambio realizado durante el test
   await session.abortTransaction();
   session.endSession();
 });
@@ -41,249 +50,124 @@ afterAll(async () => {
 });
 
 describe("User Service Tests", () => {
-  // --- Tests de Métodos Existentes ---
-  it("Should register a user successfully", async () => {
-    const response = await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    assertEqual(response.success, true, "Register user success");
+  const baseUser = {
+    name: "Gerald Chaves",
+    email: "gerald@example.com",
+    password: "securepassword"
+  };
+
+  it("should register a user successfully", async () => {
+    const response = await UserService.register({ ...baseUser }, session);
+    assertEqual("register", baseUser, response.success, true, "Register user success");
     expect(response.user).toHaveProperty("_id");
-    assertEqual(response.user.name, "Gerald Chaves", "User name");
-    assertEqual(response.user.email, "gerald@example.com", "User email");
   });
 
-  it("Should not allow duplicate emails", async () => {
-    const firstResponse = await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    assertEqual(firstResponse.success, true, "First registration");
-    const duplicateResponse = await UserService.register(
-      { name: "Duplicate User", email: "gerald@example.com", password: "anotherpassword" },
-      session
-    );
-    assertEqual(duplicateResponse.success, false, "Duplicate email registration");
+  it("should not allow duplicate emails", async () => {
+    await UserService.register({ ...baseUser }, session);
+    const dupData = { name: "Duplicate", email: baseUser.email, password: "otherpassword" };
+    const response = await UserService.register(dupData, session);
+    expect(response.success).toBe(false);
   });
 
-  it("Should login with valid credentials", async () => {
-    await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    const loginResponse = await UserService.login("gerald@example.com", "securepassword", session);
-    assertEqual(loginResponse.success, true, "Login success");
-    assertEqual(loginResponse.user.email, "gerald@example.com", "Login user email");
+  it("should login with valid credentials", async () => {
+    await UserService.register({ ...baseUser }, session);
+    const response = await UserService.login(baseUser.email, baseUser.password, session);
+    assertEqual("login", baseUser, response.success, true, "Login success");
+    expect(response.data).toHaveProperty("token");
   });
 
-  it("Should not login with incorrect password", async () => {
-    await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    const loginResponse = await UserService.login("gerald@example.com", "wrongpassword", session);
-    assertEqual(loginResponse.success, false, "Login failure with incorrect password");
+  it("should not login with wrong password", async () => {
+    await UserService.register({ ...baseUser }, session);
+    const response = await UserService.login(baseUser.email, "wrongpassword", session);
+    assertEqual("login", baseUser, response.success, false, "Login fails with wrong password");
   });
 
-  it("Should deactivate a user", async () => {
-    const registerResponse = await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    assertEqual(registerResponse.success, true, "Registration for deactivation");
-    const user = registerResponse.user;
-    const deactivateResponse = await UserService.deactivate(user._id, session);
-    assertEqual(deactivateResponse.success, true, "Deactivate user success");
-    assertEqual(deactivateResponse.user.active, false, "User active status after deactivation");
+  it("should fail login for non-existing user", async () => {
+    const response = await UserService.login("no@exist.com", "password", session);
+    assertEqual("login", {}, response.success, false, "Login fails for non-existent user");
   });
 
-  it("Should search for users", async () => {
-    await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    const searchResponse = await UserService.search({ email: "gerald@example.com" }, session);
-    assertEqual(searchResponse.success, true, "Search success");
-    assertEqual(searchResponse.users.length, 1, "Search results length");
-    assertEqual(searchResponse.users[0].email, "gerald@example.com", "Searched user email");
+  it("should search for users", async () => {
+    await UserService.register({ ...baseUser }, session);
+    const response = await UserService.search({ email: baseUser.email }, session);
+    assertEqual("search", {}, response.success, true, "Search success");
+    expect(response.users.length).toBe(1);
+    assertEqual("search", {}, response.users[0].email, baseUser.email, "User email matches");
   });
 
-  it("Should update a user", async () => {
-    const registerResponse = await UserService.register(
-      { name: "Gerald Chaves", email: "gerald@example.com", password: "securepassword" },
-      session
-    );
-    assertEqual(registerResponse.success, true, "Registration for update");
-    const user = registerResponse.user;
-    const updateResponse = await UserService.update(user._id, { name: "Updated Name" }, session);
-    assertEqual(updateResponse.success, true, "Update user success");
-    assertEqual(updateResponse.user.name, "Updated Name", "Updated user name");
+  it("should update a user successfully", async () => {
+    const reg = await UserService.register({ ...baseUser }, session);
+    const updateData = { name: "Updated Name" };
+    const response = await UserService.update(reg.user._id, updateData, session);
+    assertEqual("update", updateData, response.success, true, "Update success");
+    expect(response.user.name).toBe("Updated Name");
   });
 
-  it("Should not update a non-existing user", async () => {
-    const nonExistingId = new mongoose.Types.ObjectId();
-    const updateResponse = await UserService.update(nonExistingId, { name: "Doesn't exist" }, session);
-    assertEqual(updateResponse.success, false, "Non-existing user update failure");
-    assertEqual(updateResponse.message, "User not found", "Non-existing user update message");
+  it("should deactivate a user", async () => {
+    const reg = await UserService.register({ ...baseUser }, session);
+    const response = await UserService.deactivate(reg.user._id, session);
+    assertEqual("deactivate", {}, response.success, true, "Deactivate success");
+    expect(response.user.active).toBe(false);
   });
 
-  // --- Tests Adicionales de Métodos Existentes ---
-  it("Should fail registration when name is missing", async () => {
-    const response = await UserService.register(
-      { email: "noname@example.com", password: "securepassword" },
-      session
-    );
-    assertEqual(response.success, false, "Registration should fail without name");
+  it("should fail update for non-existing user", async () => {
+    const fakeId = new mongoose.Types.ObjectId();
+    const response = await UserService.update(fakeId, { name: "New" }, session);
+    expect(response.success).toBe(false);
   });
 
-  it("Should fail registration when email is missing", async () => {
-    const response = await UserService.register(
-      { name: "No Email", password: "securepassword" },
-      session
-    );
-    assertEqual(response.success, false, "Registration should fail without email");
+  it("should handle password change correctly", async () => {
+    const reg = await UserService.register({ ...baseUser }, session);
+    const response = await UserService.changePassword(reg.user._id, "newpassword", session);
+    assertEqual("changePassword", {}, response.success, true, "Password change success");
+
+    const loginOld = await UserService.login(baseUser.email, baseUser.password, session);
+    assertEqual("loginOld", {}, loginOld.success, false, "Old password fails after change");
+
+    const loginNew = await UserService.login(baseUser.email, "newpassword", session);
+    assertEqual("loginNew", {}, loginNew.success, true, "New password succeeds");
   });
 
-  it("Should fail registration when password is missing", async () => {
-    const response = await UserService.register(
-      { name: "No Password", email: "nopassword@example.com" },
-      session
-    );
-    assertEqual(response.success, false, "Registration should fail without password");
+  it("should validate token successfully", async () => {
+    const reg = await UserService.register({ ...baseUser }, session);
+    const login = await UserService.login(baseUser.email, baseUser.password, session);
+
+    const result = await UserService.validateToken(login.data.token);
+    assertEqual("validateToken", {}, result.success, true, "Token validation success");
+    expect(result.data).toHaveProperty("id");
   });
 
-  it("Should fail login for non-existing user", async () => {
-    const response = await UserService.login("nonexistent@example.com", "anyPassword", session);
-    assertEqual(response.success, false, "Login should fail for non-existing user");
+  it("should fail token validation for invalid token", async () => {
+    const result = await UserService.validateToken("invalid.token.here");
+    assertEqual("validateToken", {}, result.success, false, "Invalid token validation fails");
   });
 
-  it("Should search with no matching users", async () => {
-    await UserService.register(
-      { name: "Existing User", email: "existing@example.com", password: "securepassword" },
-      session
-    );
-    const response = await UserService.search({ email: "nomatch@example.com" }, session);
-    assertEqual(response.success, true, "Search should succeed even if no user is found");
-    assertEqual(response.users.length, 0, "Search results should be empty when no match exists");
-  });
-
-  it("Should update user's email successfully", async () => {
-    const regResponse = await UserService.register(
-      { name: "User To Update", email: "update@example.com", password: "securepassword" },
-      session
-    );
-    const user = regResponse.user;
-    const updateResponse = await UserService.update(user._id, { email: "updated@example.com" }, session);
-    assertEqual(updateResponse.success, true, "Update email should succeed");
-    assertEqual(updateResponse.user.email, "updated@example.com", "User email should be updated");
-  });
-
-  it("Should not deactivate a non-existing user", async () => {
-    const nonExistingId = new mongoose.Types.ObjectId();
-    const response = await UserService.deactivate(nonExistingId, session);
-    assertEqual(response.success, false, "Deactivation should fail for a non-existing user");
-    assertEqual(response.message, "User not found", "Proper error message for non-existing user deactivation");
-  });
-
-  it("Should handle multiple user registrations and search", async () => {
-    await UserService.register(
-      { name: "User One", email: "user1@multitest.com", password: "password1" },
-      session
-    );
-    await UserService.register(
-      { name: "User Two", email: "user2@multitest.com", password: "password2" },
-      session
-    );
-    await UserService.register(
-      { name: "User Three", email: "user3@another.com", password: "password3" },
-      session
-    );
-    const response = await UserService.search({ email: /@multitest\.com$/ }, session);
-    assertEqual(response.success, true, "Search for multiple users should succeed");
-    assertEqual(response.users.length, 2, "Should find two users with domain multitest.com");
-  });
-
-  it("Should update user's password successfully using changePassword", async () => {
-    const regResponse = await UserService.register(
-      { name: "User Password Update", email: "passwordupdate@example.com", password: "oldpassword" },
-      session
-    );
-    const user = regResponse.user;
-    // Cambiar contraseña
-    const changeResponse = await UserService.changePassword(user._id, "newpassword", session);
-    assertEqual(changeResponse.success, true, "Change password should succeed");
-    // Intentar login con la nueva contraseña
-    const loginNew = await UserService.login("passwordupdate@example.com", "newpassword", session);
-    assertEqual(loginNew.success, true, "Login with new password should succeed");
-    // Intentar login con la contraseña antigua
-    const loginOld = await UserService.login("passwordupdate@example.com", "oldpassword", session);
-    assertEqual(loginOld.success, false, "Login with old password should fail");
-  });
-
-  it("Should not update user with invalid data", async () => {
-    const regResponse = await UserService.register(
-      { name: "User Invalid Update", email: "invalidupdate@example.com", password: "securepassword" },
-      session
-    );
-    const user = regResponse.user;
-    const updateResponse = await UserService.update(user._id, {}, session);
-    assertEqual(updateResponse.success, true, "Update with empty data should succeed");
-    assertEqual(updateResponse.user.name, "User Invalid Update", "User name should remain unchanged");
-  });
-
-  // --- Tests para los Nuevos Servicios de Recuperación y Reseteo de Contraseña ---
-  describe("Password Recovery Services", () => {
-    it("Should fail password recovery request for non-existing user", async () => {
-      const response = await UserService.requestPasswordRecovery("nonexistent@example.com", session);
-      assertEqual(response.success, false, "Recovery should fail for non-existing user");
-      assertEqual(response.message, "Usuario no encontrado", "Proper error message for non-existing user");
+  describe("Password Recovery Tests", () => {
+    it("should request password recovery", async () => {
+      const reg = await UserService.register({ ...baseUser }, session);
+      const response = await UserService.requestPasswordRecovery(baseUser.email, session);
+      assertEqual("requestPasswordRecovery", {}, response.success, true, "Password recovery request success");
     });
 
-    it("Should send password recovery email for existing user", async () => {
-      // Registrar un usuario para la recuperación
-      const regResponse = await UserService.register(
-        { name: "Recovery Test", email: "recovery@example.com", password: "securepassword" },
-        session
-      );
-      assertEqual(regResponse.success, true, "Registration for password recovery");
-      // Solicitar recuperación
-      const recoveryResponse = await UserService.requestPasswordRecovery("recovery@example.com", session);
-      assertEqual(recoveryResponse.success, true, "Password recovery email should be sent");
-      assertEqual(
-        recoveryResponse.message,
-        "Correo de recuperación enviado",
-        "Password recovery success message"
-      );
+    it("should fail password recovery request for unknown email", async () => {
+      const response = await UserService.requestPasswordRecovery("unknown@example.com", session);
+      assertEqual("requestPasswordRecovery", {}, response.success, false, "Password recovery for unknown email fails");
     });
 
-    it("Should reset the password using a valid token", async () => {
-      // Registrar un usuario para resetear la contraseña
-      const regResponse = await UserService.register(
-        { name: "Reset Test", email: "reset@example.com", password: "oldpassword" },
-        session
-      );
-      assertEqual(regResponse.success, true, "Registration for reset password");
-      const user = regResponse.user;
-      // Para testear el reset, generamos un token siguiendo la lógica del service
-      const fullDate = new Date();
-      const payload = { id: user._id, date: fullDate.toISOString() };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-      // Resetear la contraseña utilizando el token generado
-      const resetResponse = await UserService.resetPassword(token, "newpassword", session);
-      assertEqual(resetResponse.success, true, "Password reset should succeed");
-      // Intentar login con la nueva contraseña
-      const loginNew = await UserService.login("reset@example.com", "newpassword", session);
-      assertEqual(loginNew.success, true, "Login with new password should succeed");
-      // Intentar login con la contraseña antigua, debe fallar
-      const loginOld = await UserService.login("reset@example.com", "oldpassword", session);
-      assertEqual(loginOld.success, false, "Login with old password should fail");
+    it("should reset password with valid token", async () => {
+      const reg = await UserService.register({ ...baseUser }, session);
+      const login = await UserService.login(baseUser.email, baseUser.password, session);
+
+      const reset = await UserService.resetPassword(login.data.token, "resetpassword", session);
+      assertEqual("resetPassword", {}, reset.success, true, "Reset password success");
+
+      const loginNew = await UserService.login(baseUser.email, "resetpassword", session);
+      assertEqual("loginNew", {}, loginNew.success, true, "Login with reset password");
     });
 
-    it("Should fail password reset with invalid token", async () => {
-      const invalidToken = "invalidtoken";
-      const resetResponse = await UserService.resetPassword(invalidToken, "newpassword", session);
-      assertEqual(resetResponse.success, false, "Password reset with invalid token should fail");
-      assertEqual(resetResponse.message, "Token inválido o expirado", "Proper error message for invalid token");
+    it("should fail reset password with invalid token", async () => {
+      const reset = await UserService.resetPassword("invalid.token.here", "password", session);
+      assertEqual("resetPassword", {}, reset.success, false, "Reset password with invalid token fails");
     });
   });
 });

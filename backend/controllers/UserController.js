@@ -20,12 +20,32 @@ const UserController = {
       const { email, password } = req.body;
       const result = await UserService.login(email, password);
       if (result.success) {
-        res.status(200).json(result.user);
+        res.status(200).json(result);
       } else {
         res.status(401).json({ error: result.message });
       }
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  },
+
+  validateToken: async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ error: "Token no proporcionado" });
+      }
+
+      const token = authHeader;
+      const result = await UserService.validateToken(token);
+
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(401).json(result);
+      }
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   },
 

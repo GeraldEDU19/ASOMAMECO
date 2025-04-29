@@ -21,10 +21,14 @@ app.get("/", (req, res) => {
 // Import user and event routes
 const userRoutes = require("./routes/UserRoutes");
 const eventRoutes = require("./routes/EventRoutes");
+const affiliateRoutes = require("./routes/AffiliateRoutes");
+const attendanceRoutes = require("./routes/AttendeeRoutes");
 
 // Mount the routes under their respective paths
 app.use("/api/users", userRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/affiliates", affiliateRoutes);
+app.use("/api/attendances", attendanceRoutes);
 
 // Start the server on the specified PORT
 const PORT = process.env.PORT || 5000;

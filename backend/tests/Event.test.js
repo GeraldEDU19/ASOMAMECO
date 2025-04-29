@@ -1,11 +1,18 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const EventService = require("../services/EventService");
 
-// Helper function to compare values and log expected vs received on mismatch
-function assertEqual(received, expected, message) {
+const EventService = require("../services/EventService");
+const Event = require("../models/Event");
+
+function assertEqual(funcName, data, received, expected, message) {
   if (received !== expected) {
-    console.error(`${message} - Expected: ${expected}, Received: ${received}`);
+    console.error(`Function: ${funcName}`);
+    console.error(`Data: ${JSON.stringify(data, null, 2)}`);
+    console.error(message);
+    console.error("Expected:", expected);
+    console.error("Received:", received);
+  } else {
+    console.log(`${funcName} – ${message}: Success`);
   }
   expect(received).toBe(expected);
 }
@@ -17,13 +24,12 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Create a new session and start a transaction for each test
+  await Event.deleteMany({});
   session = await mongoose.startSession();
   session.startTransaction();
 });
 
 afterEach(async () => {
-  // Rollback the transaction to revert any changes done during the test
   await session.abortTransaction();
   session.endSession();
 });
@@ -33,106 +39,113 @@ afterAll(async () => {
 });
 
 describe("Event Service Tests", () => {
-  it("Should create an event successfully", async () => {
+  it("should create an event successfully", async () => {
     const eventData = {
       name: "Tech Conference",
       date: new Date("2025-05-20"),
-      description: "A conference about new tech trends",
+      description: "A conference about tech trends",
       location: "New York"
     };
+
     const response = await EventService.createEvent(eventData, session);
-    assertEqual(response.success, true, "Event creation success");
-    expect(response.event).toHaveProperty("_id");
-    assertEqual(response.event.name, "Tech Conference", "Event name");
+    assertEqual("createEvent", eventData, response.success, true, "Event creation success");
+    assertEqual("createEvent", eventData, response.status, "Creado", "Status should be 'Creado'");
+    expect(response.data.event).toHaveProperty("_id");
   });
 
-  it("Should fail to create an event when name is missing", async () => {
+  it("should fail to create an event when name is missing", async () => {
     const eventData = {
       date: new Date("2025-05-20"),
       description: "No name provided",
       location: "New York"
     };
+
     const response = await EventService.createEvent(eventData, session);
-    assertEqual(response.success, false, "Event creation should fail without name");
+    assertEqual("createEvent", eventData, response.success, false, "Event creation should fail without name");
+    expect(response.message.toLowerCase()).toContain("evento no ha sido creado");
   });
 
-  it("Should update an event successfully", async () => {
+  it("should update an event successfully", async () => {
     const eventData = {
       name: "Original Event",
       date: new Date("2025-06-15"),
       description: "Original description",
       location: "Los Angeles"
     };
-    const createResponse = await EventService.createEvent(eventData, session);
-    assertEqual(createResponse.success, true, "Event creation for update");
-    const event = createResponse.event;
-    const updateResponse = await EventService.updateEvent(event._id, { name: "Updated Event" }, session);
-    assertEqual(updateResponse.success, true, "Event update success");
-    assertEqual(updateResponse.event.name, "Updated Event", "Updated event name");
+
+    const createResp = await EventService.createEvent(eventData, session);
+    assertEqual("createEvent", eventData, createResp.success, true, "Event creation for update");
+
+    const updateData = { name: "Updated Event" };
+    const updateResp = await EventService.updateEvent(createResp.data.event._id, updateData, session);
+    assertEqual("updateEvent", updateData, updateResp.success, true, "Event update success");
+    expect(updateResp.data.event.name).toBe(updateData.name);
   });
 
-  it("Should search for events", async () => {
-    // Create two events with a common word in the name
-    await EventService.createEvent(
-      { name: "Music Festival", date: new Date("2025-07-10"), description: "Great music", location: "Austin" },
-      session
-    );
-    await EventService.createEvent(
-      { name: "Art Festival", date: new Date("2025-08-05"), description: "Art exhibition", location: "Miami" },
-      session
-    );
-    const searchResponse = await EventService.searchEvents({ name: /Festival$/ }, session);
-    assertEqual(searchResponse.success, true, "Search events success");
-    // Expect 2 events that end with "Festival"
-    assertEqual(searchResponse.events.length, 2, "Search results length for events");
+  it("should search for events", async () => {
+    const e1 = { name: "Music Festival", date: new Date("2025-07-10"), description: "Music!", location: "Austin" };
+    const e2 = { name: "Art Festival", date: new Date("2025-08-05"), description: "Art!", location: "Miami" };
+
+    await EventService.createEvent(e1, session);
+    await EventService.createEvent(e2, session);
+
+    const query = { name: /Festival$/ };
+    const searchResp = await EventService.searchEvents(query, session);
+    assertEqual("searchEvents", query, searchResp.success, true, "Search events success");
+    expect(searchResp.data.length).toBe(2);
   });
 
-  it("Should deactivate an event", async () => {
+  it("should deactivate an event", async () => {
     const eventData = {
       name: "Event to Deactivate",
       date: new Date("2025-09-01"),
-      description: "This event will be deactivated",
+      description: "To be deactivated",
       location: "Chicago"
     };
-    const createResponse = await EventService.createEvent(eventData, session);
-    assertEqual(createResponse.success, true, "Event creation for deactivation");
-    const event = createResponse.event;
-    const deactivateResponse = await EventService.deactivateEvent(event._id, session);
-    assertEqual(deactivateResponse.success, true, "Event deactivation success");
-    assertEqual(deactivateResponse.event.active, false, "Event active status after deactivation");
+
+    const createResp = await EventService.createEvent(eventData, session);
+    assertEqual("createEvent", eventData, createResp.success, true, "Event creation for deactivation");
+
+    const deactivateResp = await EventService.deactivateEvent(createResp.data.event._id, session);
+    assertEqual("deactivateEvent", {}, deactivateResp.success, true, "Event deactivation success");
+
+    const updatedEvent = await Event.findById(createResp.data.event._id).session(session).lean();
+    expect(updatedEvent.active).toBe(false);
   });
 
-  it("Should register attendance to an event", async () => {
+  it("should register attendance to an event", async () => {
     const eventData = {
       name: "Attendance Event",
       date: new Date("2025-10-15"),
-      description: "Event for testing attendance",
+      description: "Testing attendance",
       location: "Seattle"
     };
-    const createResponse = await EventService.createEvent(eventData, session);
-    assertEqual(createResponse.success, true, "Event creation for attendance");
-    const event = createResponse.event;
-    // Simulate a user id (in a real case, this would be an ObjectId from a User)
+
+    const createResp = await EventService.createEvent(eventData, session);
     const fakeUserId = new mongoose.Types.ObjectId();
-    const attendanceResponse = await EventService.registerAttendance(event._id, fakeUserId, session);
-    assertEqual(attendanceResponse.success, true, "Attendance registration success");
-    // Verify that the attendee was added
-    const updatedEvent = attendanceResponse.event;
-    expect(updatedEvent.attendees).toContainEqual(fakeUserId);
+
+    const attendanceResp = await EventService.registerAttendance(createResp.data.event._id, fakeUserId, session);
+    assertEqual("registerAttendance", {}, attendanceResp.success, true, "Attendance registration success");
+
+    const updatedEvent = await Event.findById(createResp.data.event._id).session(session).lean();
+    expect(updatedEvent.attendees.map(id => id.toString())).toContain(fakeUserId.toString());
   });
 
-  it("Should not register attendance for non-existing event", async () => {
+  it("should not register attendance for non-existing event", async () => {
     const nonExistingId = new mongoose.Types.ObjectId();
     const fakeUserId = new mongoose.Types.ObjectId();
+
     const response = await EventService.registerAttendance(nonExistingId, fakeUserId, session);
-    assertEqual(response.success, false, "Attendance registration should fail for non-existing event");
-    assertEqual(response.message, "Event not found", "Proper error message for non-existing event attendance");
+    assertEqual("registerAttendance", {}, response.success, false, "Attendance should fail for non-existing event");
+    expect(response.message.toLowerCase()).toContain("event not found");
   });
 
-  it("Should not update a non-existing event", async () => {
+  it("should not update a non-existing event", async () => {
     const nonExistingId = new mongoose.Types.ObjectId();
-    const updateResponse = await EventService.updateEvent(nonExistingId, { name: "Doesn't exist" }, session);
-    assertEqual(updateResponse.success, false, "Non-existing event update failure");
-    assertEqual(updateResponse.message, "Event not found", "Non-existing event update message");
+    const updateData = { name: "Nonexistent" };
+
+    const response = await EventService.updateEvent(nonExistingId, updateData, session);
+    assertEqual("updateEvent", {}, response.success, false, "Non-existing event update failure");
+    expect(response.message.toLowerCase()).toContain("evento no encontrado");
   });
 });

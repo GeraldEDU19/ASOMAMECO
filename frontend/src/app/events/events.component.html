@@ -1,0 +1,177 @@
+<!-- Listado de eventos -->
+<div *ngIf="!editing" class="container py-4">
+  <div class="d-flex mb-3">
+    <input
+      class="form-control me-2"
+      placeholder="Buscar..."
+      [(ngModel)]="search"
+      (ngModelChange)="filter()"
+      [ngModelOptions]="{ standalone: true }"
+    />
+    <button class="btn btn-primary" (click)="onCreate()">Crear Evento</button>
+  </div>
+  <ul class="list-group">
+    <li
+      *ngFor="let e of filtered"
+      class="list-group-item d-flex justify-content-between align-items-center"
+      (click)="onEdit(e)"
+    >
+      <div>
+        <strong>{{ e.name }}</strong><br />
+        <small>{{ e.date | date: 'short' }}</small>
+      </div>
+      <span class="badge bg-{{ e.active ? 'success' : 'secondary' }}">
+        {{ e.active ? 'Activo' : 'Inactivo' }}
+      </span>
+    </li>
+  </ul>
+</div>
+
+<!-- Formulario de creación/edición -->
+<div *ngIf="editing" class="container py-4" style="max-width:600px">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="mb-3">
+      <label>Nombre</label>
+      <input class="form-control" formControlName="name" [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched" />
+      <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">Campo requerido.</div>
+    </div>
+    <div class="mb-3">
+      <label>Fecha y Hora</label>
+      <input type="datetime-local" class="form-control" formControlName="date" [class.is-invalid]="form.get('date')?.invalid && form.get('date')?.touched" />
+      <div class="invalid-feedback" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">Campo requerido.</div>
+    </div>
+    <div class="mb-3">
+      <label>Descripción</label>
+      <textarea class="form-control" formControlName="description" [class.is-invalid]="form.get('description')?.invalid && form.get('description')?.touched"></textarea>
+      <div class="invalid-feedback" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">Campo requerido.</div>
+    </div>
+    <div class="mb-3">
+      <label>Ubicación</label>
+      <input class="form-control" formControlName="location" [class.is-invalid]="form.get('location')?.invalid && form.get('location')?.touched" />
+      <div class="invalid-feedback" *ngIf="form.get('location')?.invalid && form.get('location')?.touched">Campo requerido.</div>
+    </div>
+    <div class="form-check mb-3">
+      <input type="checkbox" class="form-check-input" formControlName="active" />
+      <label class="form-check-label">Activo</label>
+    </div>
+    <div class="form-check mb-3">
+      <input
+        type="checkbox"
+        class="form-check-input"
+        [checked]="updateFlag"
+        (change)="updateFlag = $any($event.target).checked"
+      />
+      <label class="form-check-label">Actualizar afiliados existentes</label>
+    </div>
+
+    <!-- Carga de Excel -->
+    <div class="mb-3 d-flex align-items-center">
+      <label class="me-2 mb-0">Excel afiliados</label>
+      <input type="file" (change)="onExcelFile($event)" accept=".xlsx" />
+      <div *ngIf="loadingExcel" class="spinner-border spinner-border-sm ms-2" role="status"></div>
+    </div>
+    <div *ngIf="excelToast" class="alert alert-{{ excelToastType }} mt-2">
+      {{ excelToastMessage }}
+    </div>
+
+    <!-- Selección manual de afiliados -->
+    <button type="button" class="btn btn-outline-secondary mb-3" (click)="openAffiliatesModal()">
+      Seleccionar afiliados
+    </button>
+
+    <!-- Lista de attendees -->
+    <ul class="list-group mb-3">
+      <li
+        *ngFor="let s of selectedAttendees; let i = index"
+        class="list-group-item d-flex justify-content-between align-items-center"
+        (click)="openEditAffiliateModal(i)"
+        style="cursor: pointer;"
+      >
+        <div>
+          <strong>{{ s.attendee.affiliate.fullName }}</strong><br />
+          <small>ID: {{ s.attendee.affiliate.externalId }} | Email: {{ s.attendee.affiliate.email || 'N/A' }}</small>
+        </div>
+        <div class="d-flex align-items-center">
+          <div class="form-check form-switch me-3 mb-0" (click)="$event.stopPropagation()">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              [checked]="s.attendee.confirmed"
+              (change)="toggleConfirm(i)"
+            />
+            <label class="form-check-label">
+              {{ s.attendee.confirmed ? 'Confirmado' : 'No confirmado' }}
+            </label>
+          </div>
+          <div class="form-check form-switch me-3 mb-0" (click)="$event.stopPropagation()">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              [checked]="s.attendee.attended"
+              [disabled]="isNew"
+              (change)="toggleAttended(i)"
+            />
+            <label class="form-check-label">
+              {{ s.attendee.attended ? 'Asistió' : 'No asistió' }}
+            </label>
+          </div>
+          <button
+            class="btn btn-sm btn-outline-danger"
+            (click)="removeAffiliate(i); $event.stopPropagation()"
+          >
+            Quitar
+          </button>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Botones del formulario -->
+    <div class="d-flex justify-content-between">
+      <button class="btn btn-secondary" type="button" (click)="editing = false" [disabled]="saving">
+        Cancelar
+      </button>
+      <button class="btn btn-success" type="submit" [disabled]="saving">
+        <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+        Guardar Evento
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal de resultado -->
+<div *ngIf="showResultModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showResultModal" class="modal fade show d-block" tabindex="-1" style="z-index: 1060;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ resultIsError ? 'Error' : 'Éxito' }}</h5>
+        <button type="button" class="btn-close" (click)="showResultModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ resultMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="showResultModal = false">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de conflicto para attendees repetidos -->
+<div *ngIf="showConflictModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showConflictModal" class="modal fade show d-block" tabindex="-1" style="z-index: 1070;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Conflicto de Afiliados</h5>
+      </div>
+      <div class="modal-body">
+        <p>Uno o varios afiliados ya existen en el evento. ¿Desea actualizarlos o no incluirlos?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="confirmRetryUpdate(false)">No incluirlos</button>
+        <button class="btn btn-primary" (click)="confirmRetryUpdate(true)">Actualizar afiliados</button>
+      </div>
+    </div>
+  </div>
+</div>

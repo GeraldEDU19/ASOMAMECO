@@ -1,0 +1,21 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+@keyframes popup-center {
+  0%   { transform: translate(-50%, -60%) scale(0.8); opacity: 0; }
+  60%  { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+body {
+  background-color: #f0f2f5;
+}
+
+.popup-center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1200;
+  animation: popup-center 0.3s ease-out;
+}
+.list-group-item:hover { background-color: #f0f0f0; cursor: pointer; }

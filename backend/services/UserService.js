@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
+const BuildMethodResponse = require("../utils/reponses/BuildMethodResponse")
 
 class UserService {
   static async register(userData, session = null) {
@@ -27,16 +28,27 @@ class UserService {
     if (!session) currentSession.startTransaction();
 
     try {
+
       const user = await User.findOne({ email, active: true }).session(
         currentSession
       );
+      
       if (!user) return { success: false, message: 'Invalid credentials' };
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return { success: false, message: 'Invalid credentials' };
 
+      const fullDate = new Date();
+      const payload = {
+        id: user._id,
+        date: fullDate.toISOString(), // Ejemplo: "2025-04-01T12:34:56.789Z"
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: '24h',
+      });
+
       if (!session) await currentSession.commitTransaction();
-      return { success: true, user };
+      return BuildMethodResponse({success: true, status: "Sesión Iniciada", message: "Se ha ingresado al sistema", data: {token}});
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
       return { success: false, message: error.message };
@@ -214,6 +226,22 @@ class UserService {
       return { success: false, message: 'Token inválido o expirado' };
     } finally {
       if (!session) currentSession.endSession();
+    }
+  }
+
+  static async validateToken(token){
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return BuildMethodResponse({success: true, status: "Válido", message: "El token ha sido validado", data: decoded}) 
+    } catch (error) {
+      return BuildMethodResponse({
+        success: false,
+        status: "Inválido",
+        message:
+        error.name === "TokenExpiredError"
+            ? "El token ha expirado"
+            : "El token es inválido"
+      });
     }
   }
 }
