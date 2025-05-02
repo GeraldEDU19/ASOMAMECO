@@ -1,9 +1,22 @@
 const AttendeeService = require("../services/AttendeeService");
 
 const AttendeeController = {
+    sendConfirmationEmail: async (req, res) => {
+        try {
+            const { attendanceIds, eventId } = req.body;
+            const acceptLanguage = req.headers['accept-language'] || 'en';
+            const language = acceptLanguage.split('-')[0].toLowerCase();
+            
+            await AttendeeService.sendConfirmationEmail(attendanceIds, eventId, language);
+            res.status(200).json({ success: true, message: "Emails sent successfully" });
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     validateAttendanceToken: async (req, res) => {
         try {
-            console.log("Intenta validar")
             const { token } = req.params;
             const result = await AttendeeService.validateAttendanceToken(token);
 
@@ -13,6 +26,7 @@ const AttendeeController = {
                 res.status(400).json(result);
             }
         } catch (error) {
+            console.log(error);
             res.status(500).json({ error: error.message });
         }
     },
@@ -28,6 +42,7 @@ const AttendeeController = {
                 res.status(400).json(result);
             }
         } catch (error) {
+            console.log(error);
             res.status(500).json({ error: error.message });
         }
     }

@@ -13,6 +13,7 @@ const AffiliateController = {
         res.status(400).json(result);
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({
         success: false, 
         error: error.message 
@@ -30,6 +31,7 @@ const AffiliateController = {
         res.status(400).json(result);
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({ success: false, message: error.message });
     }
   },
@@ -53,7 +55,7 @@ const AffiliateController = {
       // Return array of per-item responses
       return res.status(200).json({ success: true, results });
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return res
         .status(500)
         .json({ success: false, message: "Error al crear los afiliados en lote." });
@@ -71,6 +73,7 @@ const AffiliateController = {
         res.status(400).json(result);
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -85,6 +88,7 @@ const AffiliateController = {
         res.status(400).json({ error: result.message });
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -99,6 +103,7 @@ const AffiliateController = {
         res.status(404).json({ error: result.message });
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: error.message });
     }
   },
@@ -116,6 +121,7 @@ const AffiliateController = {
         res.status(400).json({ error: result.message });
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: error.message });
     }
   }

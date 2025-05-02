@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const app = express();
 const cors = require('cors');
 
+// Import global configuration
+require('./utils/globalConfig');
+
 // Middleware to parse JSON requests
 app.use(express.json());
 app.use(cors());

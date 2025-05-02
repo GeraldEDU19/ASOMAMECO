@@ -1,0 +1,43 @@
+{
+  "responses": {
+    "success": "Operation completed successfully",
+    "error": "An error occurred",
+    "not_found": "Resource not found",
+    "invalid_data": "The provided data is invalid",
+    "created": "Resource created successfully",
+    "updated": "Resource updated successfully",
+    "deleted": "Resource deleted successfully",
+    "user": {
+      "registered": "User registered successfully",
+      "logged_in": "Login successful",
+      "updated": "User updated successfully",
+      "deactivated": "User deactivated successfully",
+      "password_changed": "Password updated successfully",
+      "password_reset": "Password reset successfully",
+      "recovery_sent": "Recovery email sent successfully",
+      "invalid_credentials": "Invalid credentials",
+      "token_invalid": "Invalid or expired token",
+      "token_valid": "Token is valid",
+      "token_missing": "Token not provided"
+    }
+  },
+  "email": {
+    "eventConfirmation": {
+      "title": "Event Invitation",
+      "greeting": "Hello {{userName}},",
+      "message": "A new event has been created to which you have been invited, please confirm your attendance:",
+      "actionText": "Confirm Attendance",
+      "additionalInfo": "If you do not wish to attend the event, simply ignore this email. You have 24 hours to confirm.",
+      "signature": "The ASOMAMECO Team"
+    },
+    "passwordRecovery": {
+      "title": "Password Recovery",
+      "greeting": "Hello {{userName}},",
+      "message": "We have received a request to reset your password. Click on the following link to continue with the process:",
+      "actionText": "Reset Password",
+      "warning": "If you did not request this change, please ignore this email.",
+      "expiration": "This link will expire in 24 hours.",
+      "signature": "The ASOMAMECO Team"
+    }
+  }
+} 

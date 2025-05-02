@@ -2,10 +2,10 @@ const Attendee = require("../models/Attendee");
 const Event = require("../models/Event");
 const BuildMethodResponse = require("../utils/reponses/BuildMethodResponse");
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail');
+const EmailService = require('../utils/sendEmail');
 
 class AttendeeService {
-    static async sendConfirmationEmail(attendanceIds = [], eventId) {
+    static async sendConfirmationEmail(attendanceIds = [], eventId, language = 'es') {
         let event = await Event.findById(eventId);
         for (const attendanceId of attendanceIds) {
             try {
@@ -23,28 +23,13 @@ class AttendeeService {
                     });
 
                     const attendanceLink = `${process.env.FE_URL}confirm-attendance/${token}`;
-
                     let affiliate = attendance.affiliate;
 
-                    await sendEmail(
+                    await EmailService.sendEventConfirmationEmail(
                         affiliate.email,
-                        'Asistencia a evento',
-                        `
-                            <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-                            <h2 style="color: #4CAF50;">Invitacion ${event.name} el ${event.date}</h2>
-                            <p>Hola ${affiliate.fullName || 'Afiliado'},</p>
-                            <p>Se ha creado un nuevo evento al que has sido invitado, pedimos por favor confirmar asistencia:</p>
-                            <a 
-                                href="${attendanceLink}" 
-                                style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;"
-                            >
-                                Confirmar asistencia
-                            </a>
-                            <p>En caso de que no quiera asistir al evento, simplemente ignore el email. Tiene 24 horas para confirmar.</p>
-                            <p>Gracias,</p>
-                            <p><strong>El equipo de ASOMAMECO</strong></p>
-                            </div>
-                        `
+                        affiliate.fullName || 'Afiliado',
+                        attendanceLink,
+                        language
                     );
                 }
             } catch (error) {
@@ -128,6 +113,16 @@ class AttendeeService {
                 message: error.message
             });
         }
+    }
+
+    static async getUserByAttendanceId(attendanceId) {
+        // Implementar la lógica para obtener el usuario por attendanceId
+        // Esto es un placeholder, debes implementar la lógica real
+        return {
+            email: 'user@example.com',
+            name: 'User Name',
+            language: 'es'
+        };
     }
 }
 

@@ -12,23 +12,23 @@ class EventService {
     const currentSession = session ?? await mongoose.startSession();
     if (ownSession) currentSession.startTransaction();
 
-    // extraemos los asistentes del payload
+    // Extract attendees from payload
     const incoming = Array.isArray(eventData.attendees)
       ? eventData.attendees
       : [];
 
     try {
-      // 1) Crear evento sin asistentes para obtener _id
+      // 1) Create event without attendees to get _id
       const { attendees, ...rest } = eventData;
       let event = new Event(rest);
       await event.save({ session: currentSession });
 
-      // 2) Por cada entrada en incoming, crear/actualizar affiliate y attendee
+      // 2) For each entry in incoming, create/update affiliate and attendee
       const attendeeIds = [];
       const attendeesResponse = [];
 
       for (const a of incoming) {
-        // a. crear/actualizar affiliate
+        // a. Create/update affiliate
         const affResp = await AffiliateService.createAffiliate(
           a.affiliate,
           eventData.update,
@@ -37,11 +37,11 @@ class EventService {
         attendeesResponse.push(affResp);
 
         if (!affResp.success) {
-          // si falló, podemos abortar o seguir, según tu lógica
+          // If failed, we can abort or continue, depending on your logic
           continue;
         }
 
-        // b. upsert Attendee
+        // b. Upsert Attendee
         const attDoc = await Attendee.findOneAndUpdate(
           { event: event._id, affiliate: affResp.data._id },
           {
@@ -60,7 +60,7 @@ class EventService {
         attendeeIds.push(attDoc._id);
       }
 
-      // 3) Guardar lista de Attendee IDs en el evento
+      // 3) Save list of Attendee IDs in the event
       event.attendees = attendeeIds;
       await event.save({ session: currentSession });
 
@@ -69,8 +69,8 @@ class EventService {
       if (ownSession) await currentSession.commitTransaction();
       return BuildMethodResponse({
         success: true,
-        status: "Creado",
-        message: "El evento ha sido creado",
+        status: "CREATED",
+        message: "event.created",
         data: { event, attendeesResponse }
       });
 
@@ -79,8 +79,8 @@ class EventService {
       if (ownSession) await currentSession.abortTransaction();
       return BuildMethodResponse({
         success: false,
-        status: "Fallido",
-        message: "El evento no ha sido creado",
+        status: "FAILED",
+        message: "event.creation_failed",
         data: { error: err.message }
       });
     } finally {
@@ -94,13 +94,13 @@ class EventService {
     const currentSession = session ?? await mongoose.startSession();
     if (ownSession) currentSession.startTransaction();
 
-    // extraemos los asistentes del payload (si vienen)
+    // Extract attendees from payload (if any)
     const incoming = Array.isArray(updateData.attendees)
       ? updateData.attendees
       : [];
 
     try {
-      // 1) Actualizar campos básicos (sin tocar aún attendees)
+      // 1) Update basic fields (without touching attendees yet)
       const { attendees, ...rest } = updateData;
       let event = await Event.findByIdAndUpdate(
         eventId,
@@ -111,30 +111,30 @@ class EventService {
         if (ownSession) await currentSession.abortTransaction();
         return BuildMethodResponse({
           success: false,
-          status: "Fallido",
-          message: "Evento no encontrado"
+          status: "NOT_FOUND",
+          message: "event.not_found"
         });
       }
 
-      // 2) Procesar cada attendee entrante
+      // 2) Process each incoming attendee
       const attendeeIds = [];
       const attendeesResponse = [];
 
       for (const a of incoming) {
-        // a) crear/actualizar affiliate
+        // a) Create/update affiliate
         const affResp = await AffiliateService.createAffiliate(
           a.affiliate,
-          true,                  // forzar update si ya existe
+          true,                  // Force update if already exists
           currentSession
         );
         attendeesResponse.push(affResp);
 
         if (!affResp.success) {
-          // si falla, dejamos pasar (o podrías abortar si prefieres)
+          // If fails, we let it pass (or you could abort if preferred)
           continue;
         }
 
-        // b) upsert en Attendee
+        // b) Upsert in Attendee
         const attDoc = await Attendee.findOneAndUpdate(
           { event: event._id, affiliate: affResp.data._id },
           {
@@ -153,20 +153,16 @@ class EventService {
         attendeeIds.push(attDoc._id);
       }
 
-      // 3) Sobrescribir event.attendees y guardar
+      // 3) Overwrite event.attendees and save
       event.attendees = attendeeIds;
       await event.save({ session: currentSession });
 
       if (ownSession) await currentSession.commitTransaction();
 
-
-      
-
-
       return BuildMethodResponse({
         success: true,
-        status: "Actualizado",
-        message: "El evento ha sido actualizado",
+        status: "UPDATED",
+        message: "event.updated",
         data: { event, attendeesResponse }
       });
 
@@ -175,8 +171,8 @@ class EventService {
       if (ownSession) await currentSession.abortTransaction();
       return BuildMethodResponse({
         success: false,
-        status: "Fallido",
-        message: "Error al actualizar el evento",
+        status: "FAILED",
+        message: "event.update_failed",
         data: { error: err.message }
       });
     } finally {
@@ -192,16 +188,27 @@ class EventService {
     try {
       const events = await Event.find(query).session(currentSession);
       if (!session) await currentSession.commitTransaction();
-      return BuildMethodResponse({success: true, status: "Correcto", data: events, message: "Los eventos han sido buscados"});
+      return global.BuildMethodResponse({
+        success: true,
+        status: "SUCCESS",
+        message: "event.search_success",
+        data: events
+      });
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
-      return { success: false, message: error.message };
+      console.log(error);
+      return global.BuildMethodResponse({
+        success: false,
+        status: "FAILED",
+        message: "event.search_failed",
+        data: { error: error.message }
+      });
     } finally {
       if (!session) currentSession.endSession();
     }
   }
 
-  // Deactivate (cancel) an event
+  // Deactivate an event
   static async deactivateEvent(eventId, session = null) {
     const currentSession = session || (await mongoose.startSession());
     if (!session) currentSession.startTransaction();
@@ -212,35 +219,76 @@ class EventService {
         { active: false },
         { new: true, session: currentSession }
       );
-      if (!event) return { success: false, message: "Event not found" };
+
+      if (!event) {
+        if (!session) await currentSession.abortTransaction();
+        return BuildMethodResponse({
+          success: false,
+          status: "NOT_FOUND",
+          message: "event.not_found"
+        });
+      }
+
       if (!session) await currentSession.commitTransaction();
-      return { success: true, event };
+      return BuildMethodResponse({
+        success: true,
+        status: "UPDATED",
+        message: "event.deactivated",
+        data: { event }
+      });
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
-      return { success: false, message: error.message };
+      return BuildMethodResponse({
+        success: false,
+        status: "FAILED",
+        message: "event.deactivation_failed",
+        data: { error: error.message }
+      });
     } finally {
       if (!session) currentSession.endSession();
     }
   }
 
-  // Register a user's attendance to an event
-  static async registerAttendance(eventId, userId, session = null) {
+  // Get event report
+  static async getEventReport(eventId, session = null) {
     const currentSession = session || (await mongoose.startSession());
     if (!session) currentSession.startTransaction();
 
     try {
       const event = await Event.findById(eventId).session(currentSession);
-      if (!event) return { success: false, message: "Event not found" };
-      // Avoid duplicate attendance
-      if (!event.attendees.includes(userId)) {
-        event.attendees.push(userId);
+      if (!event) {
+        if (!session) await currentSession.abortTransaction();
+        return BuildMethodResponse({
+          success: false,
+          status: "NOT_FOUND",
+          message: "event.not_found"
+        });
       }
-      await event.save({ session: currentSession });
+
+      const attendees = await Attendee.find({ event: eventId }).session(currentSession);
+      const report = {
+        totalAttendees: attendees.length,
+        confirmed: attendees.filter(a => a.confirmed).length,
+        notConfirmed: attendees.filter(a => !a.confirmed).length,
+        attended: attendees.filter(a => a.attended).length,
+        confirmedButDidNotAttend: attendees.filter(a => a.confirmed && !a.attended).length
+      };
+
       if (!session) await currentSession.commitTransaction();
-      return { success: true, event };
+      return BuildMethodResponse({
+        success: true,
+        status: "SUCCESS",
+        message: "event.report_generated",
+        data: report
+      });
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
-      return { success: false, message: error.message };
+      return BuildMethodResponse({
+        success: false,
+        status: "FAILED",
+        message: "event.report_failed",
+        data: { error: error.message }
+      });
     } finally {
       if (!session) currentSession.endSession();
     }

@@ -1,12 +1,6 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  ReactiveFormsModule,
-  FormsModule
-} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { EventService, Event, Attendee, Affiliate } from '../services/event.service';
 import { AffiliateService } from '../services/affiliate.service';
 import * as XLSX from 'xlsx';
@@ -28,8 +22,8 @@ export class EventsComponent implements OnInit {
 
   editingEventId: string | null | undefined;
   selectedAttendees: { attendee: Attendee }[] = [];
-  showAffiliatesModal = false;
 
+  showAffiliatesModal = false;
   modalSearch = '';
   modalAffiliates: Affiliate[] = [];
   filteredModalAffiliates: Affiliate[] = [];
@@ -43,13 +37,11 @@ export class EventsComponent implements OnInit {
   affiliateForm!: FormGroup;
   showAffiliateModal = false;
 
-  // Spinner, bloqueo del botón y modales
   saving = false;
   resultMessage = '';
   showResultModal = false;
   resultIsError = false;
 
-  // Modal para decisión de actualizar afiliados repetidos
   showConflictModal = false;
   payloadToRetry: any = null;
   eventIdToRetry: string | null = null;
@@ -98,7 +90,6 @@ export class EventsComponent implements OnInit {
     this.isNew = false;
     this.updateFlag = false;
     this.editingEventId = e._id;
-
     this.selectedAttendees = e.attendees.map(a => ({
       attendee: {
         _id: a._id,
@@ -107,7 +98,6 @@ export class EventsComponent implements OnInit {
         attended: a.attended
       }
     }));
-
     this.buildForm({ ...e, date: new Date(e.date).toISOString().slice(0, 16) });
   }
 
@@ -120,7 +110,6 @@ export class EventsComponent implements OnInit {
       active: [e.active]
     });
   }
-
   openAffiliatesModal() {
     this.modalSearch = '';
     this.asvc.getAll().subscribe(r => {
@@ -191,6 +180,7 @@ export class EventsComponent implements OnInit {
   closeAffiliateModal() {
     this.showAffiliateModal = false;
   }
+
   toggleConfirm(i: number) {
     this.selectedAttendees[i].attendee.confirmed = !this.selectedAttendees[i].attendee.confirmed;
     this.selectedAttendees = [...this.selectedAttendees];
@@ -208,7 +198,6 @@ export class EventsComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-
     const payload: any = {
       ...this.form.value,
       update: this.updateFlag,
@@ -218,7 +207,6 @@ export class EventsComponent implements OnInit {
         attended: this.isNew ? false : x.attendee.attended
       }))
     };
-
     this.sendPayload(payload);
   }
 
@@ -258,7 +246,6 @@ export class EventsComponent implements OnInit {
   confirmRetryUpdate(choice: boolean) {
     this.showConflictModal = false;
     if (choice && this.payloadToRetry && this.eventIdToRetry) {
-      // Si elige actualizar, se hace el update con la flag update: true
       const retryPayload = { ...this.payloadToRetry, update: true };
       this.saving = true;
       this.svc.update(this.eventIdToRetry, retryPayload).subscribe({
@@ -278,7 +265,6 @@ export class EventsComponent implements OnInit {
         }
       });
     } else {
-      // ✅ Si elige NO incluirlos, simplemente se considera creado y se vuelve a la lista
       this.resultMessage = 'El evento ha sido creado (sin actualizar afiliados existentes).';
       this.resultIsError = false;
       this.showResultModal = true;
@@ -286,7 +272,6 @@ export class EventsComponent implements OnInit {
       this.load();
     }
   }
-  
 
   private showExcelToast(type: 'success' | 'danger', msg: string) {
     this.excelToastType = type;
@@ -337,17 +322,6 @@ export class EventsComponent implements OnInit {
     });
 
     this.selectedAttendees = [...this.selectedAttendees];
-
-    const payloadPreview = {
-      ...this.form?.value,
-      update: this.updateFlag,
-      attendees: this.selectedAttendees.map(x => ({
-        affiliate: x.attendee.affiliate,
-        confirmed: x.attendee.confirmed,
-        attended: this.isNew ? false : x.attendee.attended
-      }))
-    };
-    console.log('Posible payload al cargar Excel:', payloadPreview);
   }
 
   private splitNombre(nombre: string): [string, string, string, string | null] {
@@ -376,7 +350,6 @@ export class EventsComponent implements OnInit {
           Object.keys(r).forEach(k => (o[k.trim()] = r[k]));
           return o;
         });
-        console.log('Data raw procesada:', rows);
         this.asvc.getAll().subscribe(r => {
           this.ngZone.run(() => {
             if (!r.success) {

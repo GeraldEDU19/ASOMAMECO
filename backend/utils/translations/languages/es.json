@@ -1,0 +1,43 @@
+{
+  "responses": {
+    "success": "Operación completada exitosamente",
+    "error": "Ocurrió un error",
+    "not_found": "Recurso no encontrado",
+    "invalid_data": "Los datos proporcionados son inválidos",
+    "created": "Recurso creado exitosamente",
+    "updated": "Recurso actualizado exitosamente",
+    "deleted": "Recurso eliminado exitosamente",
+    "user": {
+      "registered": "Usuario registrado exitosamente",
+      "logged_in": "Sesión iniciada exitosamente",
+      "updated": "Usuario actualizado exitosamente",
+      "deactivated": "Usuario desactivado exitosamente",
+      "password_changed": "Contraseña actualizada exitosamente",
+      "password_reset": "Contraseña restablecida exitosamente",
+      "recovery_sent": "Correo de recuperación enviado exitosamente",
+      "invalid_credentials": "Credenciales inválidas",
+      "token_invalid": "Token inválido o expirado",
+      "token_valid": "Token válido",
+      "token_missing": "Token no proporcionado"
+    }
+  },
+  "email": {
+    "eventConfirmation": {
+      "title": "Invitación a evento",
+      "greeting": "Hola {{userName}},",
+      "message": "Se ha creado un nuevo evento al que has sido invitado, pedimos por favor confirmar asistencia:",
+      "actionText": "Confirmar asistencia",
+      "additionalInfo": "En caso de que no quiera asistir al evento, simplemente ignore el email. Tiene 24 horas para confirmar.",
+      "signature": "El equipo de ASOMAMECO"
+    },
+    "passwordRecovery": {
+      "title": "Recuperación de contraseña",
+      "greeting": "Hola {{userName}},",
+      "message": "Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para continuar con el proceso:",
+      "actionText": "Restablecer contraseña",
+      "warning": "Si no solicitaste este cambio, por favor ignora este correo.",
+      "expiration": "Este enlace expirará en 24 horas.",
+      "signature": "El equipo de ASOMAMECO"
+    }
+  }
+} 

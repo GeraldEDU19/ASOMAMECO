@@ -1,39 +1,53 @@
+// Enum para status válidos
+const ResponseStatus = {
+  SUCCESS: "SUCCESS",
+  CREATED: "CREATED",
+  UPDATED: "UPDATED",
+  DELETED: "DELETED",
+  ERROR: "ERROR",
+  NOT_FOUND: "NOT_FOUND",
+  INVALID_DATA: "INVALID_DATA"
+};
+
 /**
  * Build a standardized response object for your service methods.
  *
  * @param {Object} params
- * @param {boolean} params.success    – Whether the operation succeeded.
- * @param {string}  params.status     – A short status label (e.g. "Creado", "Actualizado", "Fallido").
- * @param {string}  params.message    – Human-readable description of what happened.
- * @param {string} [params.externalId] – (Opcional) Identificador externo del afiliado.
- * @param {string} [params.fullName]    – (Opcional) Nombre completo del afiliado (o "N/A" si se desconoce).
- * @returns {Object} Response object, sin `externalId` si no se proporcionó.
+ * @param {boolean} params.success - Whether the operation succeeded.
+ * @param {ResponseStatus} params.status - Status from predefined enum values.
+ * @param {string} [params.message] - Custom message (optional).
+ * @param {Object} params.data - Additional data to include in the response.
+ * @param {boolean} [params.controlled] - Whether the error is controlled (optional).
+ * @returns {Object} Standardized response object
  */
 function BuildMethodResponse({
-    success = false,
-    status = "Fallido",
-    message = "",
-    externalId,
-    fullName,
-    data = {},
-  } = {}) {
-    // Create the base response with required fields
-    const response = { success, status, data };
-    
-    // Only include externalId if it was provided
-    if (externalId !== undefined) {
-      response.externalId = externalId;
-    }
-    if (fullName !== undefined) {
-      response.fullName = fullName;
-    }
-    
-    if (message !== undefined) {
-      response.message = message;
-    }
-
-    return response;
+  success = false,
+  status = ResponseStatus.ERROR,
+  message = "",
+  data = {},
+  controlled = false
+} = {}) {
+  // Validate that status is a valid enum value
+  if (!Object.values(ResponseStatus).includes(status)) {
+    throw new Error(`Invalid status. Must be one of: ${Object.values(ResponseStatus).join(', ')}`);
   }
-  
-  module.exports = BuildMethodResponse
+
+  // If it's an error and not controlled, use a generic message
+  if (!success && !controlled) {
+    message = "error";
+  }
+
+  return {
+    success,
+    status,
+    message,
+    data,
+    controlled
+  };
+}
+
+module.exports = {
+  BuildMethodResponse,
+  ResponseStatus
+};
   
