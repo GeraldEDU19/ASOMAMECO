@@ -8,10 +8,10 @@ const EventSchema = new mongoose.Schema({
   description:{ type: String,  default: "" },
   location:   { type: String,  default: "" },
   active:     { type: Boolean, default: true },
-  attendees: [
+  attendances: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Attendee",
+      ref: "Attendance",
       autopopulate: true
     }
   ]

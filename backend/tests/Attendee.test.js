@@ -1,11 +1,11 @@
-// tests/Attendee.test.js
+// tests/Attendance.test.js
 
 require("dotenv").config();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 
-const AttendeeService = require("../services/AttendeeService");
-const Attendee = require("../models/Attendee");
+const AttendanceService = require("../services/AttendanceService");
+const Attendance = require("../models/Attendance");
 const Event = require("../models/Event");
 const Affiliate = require("../models/Affiliate");
 
@@ -17,7 +17,7 @@ jest.mock("../utils/sendEmail", () =>
 let session;
 let affiliate;
 let event;
-let attendee;
+let attendance;
 let token;
 
 beforeAll(async () => {
@@ -25,7 +25,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  await mongoose.connection.db.dropCollection('attendees').catch(() => {});
+  await mongoose.connection.db.dropCollection('attendances').catch(() => {});
   await mongoose.connection.db.dropCollection('affiliates').catch(() => {});
   await mongoose.connection.db.dropCollection('events').catch(() => {});
 
@@ -46,7 +46,7 @@ beforeEach(async () => {
     location: "Nowhere",
   });
 
-  attendee = await Attendee.create({
+  attendance = await Attendance.create({
     event: event._id,
     affiliate: affiliate._id,
     confirmed: false,
@@ -54,7 +54,7 @@ beforeEach(async () => {
   });
 
   const payload = {
-    attendanceId: attendee._id.toString(),
+    attendanceId: attendance._id.toString(),
     date: new Date().toISOString(),
     eventId: event._id.toString(),
   };
@@ -74,34 +74,34 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-describe("Attendee Service Tests", () => {
+describe("Attendance Service Tests", () => {
   it("should validate attendance token and confirm", async () => {
-    const response = await AttendeeService.validateAttendanceToken(token);
+    const response = await AttendanceService.validateAttendanceToken(token);
     expect(response.success).toBe(true);
     expect(response.status).toBe("Confirmado");
   });
 
   it("should check attendance token after confirming", async () => {
     // <-- FIX IMPORTANTE --> Primero confirmamos
-    await AttendeeService.validateAttendanceToken(token);
+    await AttendanceService.validateAttendanceToken(token);
 
     // Ahora sí validamos el check
-    const response = await AttendeeService.checkAttendanceToken(token);
+    const response = await AttendanceService.checkAttendanceToken(token);
     expect(response.success).toBe(true);
     expect(response.data.confirmed).toBe(true);
   });
 
   it("should fail validate attendance token with invalid token", async () => {
-    const invalid = await AttendeeService.validateAttendanceToken("invalid.token.here");
+    const invalid = await AttendanceService.validateAttendanceToken("invalid.token.here");
     expect(invalid.success).toBe(false);
   });
 
   it("should fail check attendance token with invalid token", async () => {
-    const invalid = await AttendeeService.checkAttendanceToken("invalid.token.here");
+    const invalid = await AttendanceService.checkAttendanceToken("invalid.token.here");
     expect(invalid.success).toBe(false);
   });
 
-  it("should fail validate if attendee does not exist", async () => {
+  it("should fail validate if attendance does not exist", async () => {
     const fakePayload = {
       attendanceId: new mongoose.Types.ObjectId().toString(),
       date: new Date().toISOString(),
@@ -109,11 +109,11 @@ describe("Attendee Service Tests", () => {
     };
     const fakeToken = jwt.sign(fakePayload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    const response = await AttendeeService.validateAttendanceToken(fakeToken);
+    const response = await AttendanceService.validateAttendanceToken(fakeToken);
     expect(response.success).toBe(false);
   });
 
-  it("should fail check if attendee does not exist", async () => {
+  it("should fail check if attendance does not exist", async () => {
     const fakePayload = {
       attendanceId: new mongoose.Types.ObjectId().toString(),
       date: new Date().toISOString(),
@@ -121,7 +121,7 @@ describe("Attendee Service Tests", () => {
     };
     const fakeToken = jwt.sign(fakePayload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    const response = await AttendeeService.checkAttendanceToken(fakeToken);
+    const response = await AttendanceService.checkAttendanceToken(fakeToken);
     expect(response.success).toBe(false);
   });
 });

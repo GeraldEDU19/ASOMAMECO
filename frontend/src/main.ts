@@ -3,18 +3,19 @@ import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@a
 import { provideRouter, Routes } from '@angular/router';
 
 import { AppComponent } from './app/app.component';
-import { LoginComponent } from './app/auth/login/login.component';
-import { DashboardComponent } from './app/dashboard/dashboard.component';
-import { EventsComponent } from './app/events/events.component';
-import { AffiliatesComponent } from './app/affiliates/affiliates.component';
-import { UsersComponent } from './app/users/users.component';
-import { ConfirmAttendanceComponent } from './app/app/confirm-attendance/confirm-attendance.component';
+import { LoginComponent } from './app/modules/login/login.component';
+import { DashboardComponent } from './app/modules/dashboard/dashboard.component';
+import { EventsComponent } from './app/modules/events/events.component';
+import { AffiliatesComponent } from './app/modules/affiliates/affiliates.component';
+import { UsersComponent } from './app/modules/users/users.component';
+import { ConfirmAttendanceComponent } from './app/modules/attendance/confirm-attendance/confirm-attendance.component';
 import { AuthInterceptor } from './app/core/auth.interceptor';
+import { routes as appRoutes } from './app/app.routes';
 
 const routes: Routes = [
   { path: '', component: LoginComponent },
   { path: 'dashboard', component: DashboardComponent },
-  { path: 'events', component: EventsComponent },
+  { path: 'events', loadChildren: () => import('./app/modules/events/events.module').then(m => m.EventsModule) },
   { path: 'affiliate', component: AffiliatesComponent },
   { path: 'users', component: UsersComponent },
   { path: 'confirm-attendance/:token', component: ConfirmAttendanceComponent },

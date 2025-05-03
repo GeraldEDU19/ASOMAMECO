@@ -1,0 +1,222 @@
+<div class="form-container">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-group">
+      <label>Nombre</label>
+      <input class="form-input" formControlName="name" [class.error]="form.get('name')?.invalid && form.get('name')?.touched" />
+      <div class="error-message" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">Campo requerido.</div>
+    </div>
+    <div class="form-group">
+      <label>Fecha y Hora</label>
+      <input type="datetime-local" class="form-input" formControlName="date" [class.error]="form.get('date')?.invalid && form.get('date')?.touched" />
+      <div class="error-message" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">Campo requerido.</div>
+    </div>
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea class="form-input" formControlName="description" [class.error]="form.get('description')?.invalid && form.get('description')?.touched"></textarea>
+      <div class="error-message" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">Campo requerido.</div>
+    </div>
+    <div class="form-group">
+      <label>Ubicación</label>
+      <input class="form-input" formControlName="location" [class.error]="form.get('location')?.invalid && form.get('location')?.touched" />
+      <div class="error-message" *ngIf="form.get('location')?.invalid && form.get('location')?.touched">Campo requerido.</div>
+    </div>
+    <div class="form-check">
+      <input type="checkbox" class="form-checkbox" formControlName="active" />
+      <label>Activo</label>
+    </div>
+    <div class="form-check">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        [checked]="updateFlag"
+        (change)="updateFlag = $any($event.target).checked"
+      />
+      <label>Actualizar afiliados existentes</label>
+    </div>
+
+    <!-- Carga de Excel -->
+    <div class="form-group file-upload">
+      <label>Excel afiliados</label>
+      <input type="file" (change)="onExcelFile($event)" accept=".xlsx" />
+      <div *ngIf="loadingExcel" class="loading-spinner"></div>
+    </div>
+    <div *ngIf="excelToast" class="toast toast-{{ excelToastType }}">
+      {{ excelToastMessage }}
+    </div>
+
+    <!-- Selección manual de afiliados -->
+    <button type="button" class="button button-secondary" (click)="openAffiliatesModal()">
+      Seleccionar afiliados
+    </button>
+
+    <!-- Lista de afiliados seleccionados -->
+    <ul class="attendees-list">
+      <li
+        *ngFor="let s of selectedAttendances; let i = index"
+        class="attendee-item"
+        (click)="openEditAffiliateModal(i)"
+      >
+        <div class="attendee-info">
+          <strong>{{ s.attendance.affiliate.fullName }}</strong>
+          <small>ID: {{ s.attendance.affiliate.externalId }} | Email: {{ s.attendance.affiliate.email || 'N/A' }}</small>
+        </div>
+        <div class="attendee-actions">
+          <div class="form-check" (click)="$event.stopPropagation()">
+            <input
+              class="form-checkbox"
+              type="checkbox"
+              [checked]="s.attendance.confirmed"
+              (change)="toggleConfirm(i)"
+            />
+            <label>
+              {{ s.attendance.confirmed ? 'Confirmado' : 'No confirmado' }}
+            </label>
+          </div>
+          <div class="form-check" (click)="$event.stopPropagation()">
+            <input
+              class="form-checkbox"
+              type="checkbox"
+              [checked]="s.attendance.attended"
+              [disabled]="isNew"
+              (change)="toggleAttended(i)"
+            />
+            <label>
+              {{ s.attendance.attended ? 'Asistió' : 'No asistió' }}
+            </label>
+          </div>
+          <button
+            class="button button-danger"
+            (click)="removeAffiliate(i); $event.stopPropagation()"
+          >
+            Quitar
+          </button>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Botones del formulario -->
+    <div class="form-actions">
+      <button class="button button-secondary" type="button" (click)="onCancel()" [disabled]="saving">
+        Cancelar
+      </button>
+      <button class="button button-primary" type="submit" [disabled]="saving">
+        <span *ngIf="saving" class="loading-spinner"></span>
+        Guardar Evento
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal de resultado (éxito o error) -->
+<div *ngIf="showResultModal" class="modal-backdrop"></div>
+<div *ngIf="showResultModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ resultIsError ? 'Error' : 'Éxito' }}</h3>
+      <button type="button" class="modal-close" (click)="showResultModal = false">×</button>
+    </div>
+    <div class="modal-body">
+      <p>{{ resultMessage }}</p>
+    </div>
+    <div class="modal-footer">
+      <button class="button button-primary" (click)="showResultModal = false">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de conflicto para attendances repetidos -->
+<div *ngIf="showConflictModal" class="modal-backdrop"></div>
+<div *ngIf="showConflictModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Conflicto de Afiliados</h3>
+    </div>
+    <div class="modal-body">
+      <p>Uno o varios afiliados ya existen en el evento. ¿Desea actualizarlos o no incluirlos?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="button button-secondary" (click)="confirmRetryUpdate(false)">No incluirlos</button>
+      <button class="button button-primary" (click)="confirmRetryUpdate(true)">Actualizar afiliados</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para seleccionar afiliados -->
+<div *ngIf="showAffiliatesModal" class="modal-backdrop"></div>
+<div *ngIf="showAffiliatesModal" class="modal modal-lg">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Buscar afiliados</h3>
+      <button type="button" class="modal-close" (click)="showAffiliatesModal = false">×</button>
+    </div>
+    <div class="modal-body">
+      <input
+        class="form-input"
+        placeholder="Buscar..."
+        [(ngModel)]="modalSearch"
+        (ngModelChange)="filterModal()"
+        [ngModelOptions]="{ standalone: true }"
+      />
+      <ul class="affiliates-list">
+        <li
+          *ngFor="let a of filteredModalAffiliates"
+          class="affiliate-item"
+          (click)="addAffiliate(a)"
+        >
+          {{ a.fullName }} - ID: {{ a.externalId }} - Email: {{ a.email || 'N/A' }}
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar afiliado seleccionado -->
+<div *ngIf="showAffiliateModal" class="modal-backdrop"></div>
+<div *ngIf="showAffiliateModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Editar Afiliado</h3>
+      <button type="button" class="modal-close" (click)="closeAffiliateModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="affiliateForm">
+        <div class="form-group">
+          <label>External ID</label>
+          <input class="form-input" formControlName="externalId" />
+        </div>
+        <div class="form-group">
+          <label>Primer Nombre</label>
+          <input class="form-input" formControlName="firstName" />
+        </div>
+        <div class="form-group">
+          <label>Segundo Nombre</label>
+          <input class="form-input" formControlName="secondName" />
+        </div>
+        <div class="form-group">
+          <label>Primer Apellido</label>
+          <input class="form-input" formControlName="firstLastName" />
+        </div>
+        <div class="form-group">
+          <label>Segundo Apellido</label>
+          <input class="form-input" formControlName="secondLastName" />
+        </div>
+        <div class="form-group">
+          <label>Correo</label>
+          <input class="form-input" formControlName="email" />
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input class="form-input" formControlName="telephoneNumber" />
+        </div>
+        <div class="form-check">
+          <input type="checkbox" class="form-checkbox" formControlName="active" />
+          <label>Activo</label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="button button-secondary" (click)="closeAffiliateModal()">Cancelar</button>
+      <button class="button button-primary" (click)="saveAffiliateChanges()">Guardar cambios</button>
+    </div>
+  </div>
+</div> 

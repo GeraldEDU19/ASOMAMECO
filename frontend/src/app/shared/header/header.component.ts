@@ -8,25 +8,49 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
-      <div class="container-fluid">
-        <a class="navbar-brand fs-3" routerLink="/dashboard">ASOMAMECO</a>
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-          <li class="nav-item mx-3">
-            <a class="nav-link fs-5 fw-semibold" routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-          </li>
-          <li class="nav-item mx-3">
-            <a class="nav-link fs-5 fw-semibold" routerLink="/events"    routerLinkActive="active">Eventos</a>
-          </li>
-          <li class="nav-item mx-3">
-            <a class="nav-link fs-5 fw-semibold" routerLink="/affiliate" routerLinkActive="active">Afiliados</a>
-          </li>
-          <li class="nav-item mx-3">
-            <a class="nav-link fs-5 fw-semibold" routerLink="/users"     routerLinkActive="active">Usuarios</a>
-          </li>
-        </ul>
+    <header class="main-header">
+      <div class="header-content">
+        <button class="menu-toggle" (click)="menuOpen = !menuOpen" aria-label="Menú" type="button">
+          <span [class.open]="menuOpen">☰</span>
+        </button>
+        <div class="brand-center">
+          <a class="brand" routerLink="/dashboard">ASOMAMECO</a>
+        </div>
+        <div class="user-avatar" title="Usuario">
+          <span>👤</span>
+        </div>
       </div>
-    </nav>
-  `
+      <nav class="nav-links-wrapper" [class.open]="menuOpen" (click)="$event.stopPropagation()">
+        <div class="menu-user-section">
+          <div class="menu-user-info">
+            <span class="menu-user-avatar">👤</span>
+            <span class="menu-user-name">Usuario</span>
+          </div>
+          <button class="menu-logout-btn" (click)="logout()">Cerrar sesión</button>
+        </div>
+        <div class="nav-links">
+          <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMenu()">Dashboard</a>
+          <a routerLink="/events"    routerLinkActive="active" (click)="closeMenu()">Eventos</a>
+          <a routerLink="/affiliate" routerLinkActive="active" (click)="closeMenu()">Afiliados</a>
+          <a routerLink="/users"     routerLinkActive="active" (click)="closeMenu()">Usuarios</a>
+        </div>
+      </nav>
+      <div class="menu-backdrop" *ngIf="menuOpen" (click)="closeMenu()"></div>
+    </header>
+  `,
+  styleUrls: ['./header.component.css']
 })
-export class HeaderComponent {}
+export class HeaderComponent {
+  menuOpen = false;
+  userMenuOpen = false;
+
+  closeMenu() {
+    this.menuOpen = false;
+    this.userMenuOpen = false;
+  }
+  logout() {
+    // Aquí iría la lógica real de logout
+    this.closeMenu();
+    alert('Sesión cerrada');
+  }
+}

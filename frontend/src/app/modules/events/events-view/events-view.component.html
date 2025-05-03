@@ -1,0 +1,33 @@
+<div class="event-view-container">
+  <div class="event-header">
+    <h1>{{ event.title }}</h1>
+    <div class="event-meta">
+      <span class="event-date">{{ event.date | date:'mediumDate' }}</span>
+      <span class="event-status" [class.active]="event.status === 'Activo'">
+        {{ event.status }}
+      </span>
+    </div>
+  </div>
+
+  <div class="event-details">
+    <div class="detail-group">
+      <h3>Descripción</h3>
+      <p>{{ event.description }}</p>
+    </div>
+
+    <div class="detail-group">
+      <h3>Ubicación</h3>
+      <p>{{ event.location }}</p>
+    </div>
+
+    <div class="detail-group">
+      <h3>Asistentes</h3>
+      <p>{{ event.attendees }} personas</p>
+    </div>
+  </div>
+
+  <div class="event-actions">
+    <a [routerLink]="['/events/edit', event.id]" class="button button-primary">Editar Evento</a>
+    <a routerLink="/events" class="button button-secondary">Volver a la lista</a>
+  </div>
+</div> 

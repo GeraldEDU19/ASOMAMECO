@@ -1,6 +1,6 @@
 const Event = require("../models/Event");
-const Attendee = require("../models/Attendee")
-const AttendeeService = require("./AttendeeService")
+const Attendance = require("../models/Attendance")
+const AttendanceService = require("./AttendanceService")
 const BuildMethodResponse = require("../utils/reponses/BuildMethodResponse")
 const AffiliateService = require("./AffiliateService")
 const mongoose = require("mongoose");
@@ -12,20 +12,20 @@ class EventService {
     const currentSession = session ?? await mongoose.startSession();
     if (ownSession) currentSession.startTransaction();
 
-    // Extract attendees from payload
-    const incoming = Array.isArray(eventData.attendees)
-      ? eventData.attendees
+    // Extract attendances from payload
+    const incoming = Array.isArray(eventData.attendances)
+      ? eventData.attendances
       : [];
 
     try {
-      // 1) Create event without attendees to get _id
-      const { attendees, ...rest } = eventData;
+      // 1) Create event without attendances to get _id
+      const { attendances, ...rest } = eventData;
       let event = new Event(rest);
       await event.save({ session: currentSession });
 
-      // 2) For each entry in incoming, create/update affiliate and attendee
-      const attendeeIds = [];
-      const attendeesResponse = [];
+      // 2) For each entry in incoming, create/update affiliate and attendance
+      const attendanceIds = [];
+      const attendancesResponse = [];
 
       for (const a of incoming) {
         // a. Create/update affiliate
@@ -34,15 +34,15 @@ class EventService {
           eventData.update,
           currentSession
         );
-        attendeesResponse.push(affResp);
+        attendancesResponse.push(affResp);
 
         if (!affResp.success) {
           // If failed, we can abort or continue, depending on your logic
           continue;
         }
 
-        // b. Upsert Attendee
-        const attDoc = await Attendee.findOneAndUpdate(
+        // b. Upsert Attendance
+        const attDoc = await Attendance.findOneAndUpdate(
           { event: event._id, affiliate: affResp.data._id },
           {
             $set: {
@@ -57,21 +57,21 @@ class EventService {
             session: currentSession
           }
         );
-        attendeeIds.push(attDoc._id);
+        attendanceIds.push(attDoc._id);
       }
 
-      // 3) Save list of Attendee IDs in the event
-      event.attendees = attendeeIds;
+      // 3) Save list of Attendance IDs in the event
+      event.attendances = attendanceIds;
       await event.save({ session: currentSession });
 
-      AttendeeService.sendConfirmationEmail(attendeeIds, event._id.toString())
+      AttendanceService.sendConfirmationEmail(attendanceIds, event._id.toString())
 
       if (ownSession) await currentSession.commitTransaction();
       return BuildMethodResponse({
         success: true,
         status: "CREATED",
         message: "event.created",
-        data: { event, attendeesResponse }
+        data: { event, attendancesResponse }
       });
 
     } catch (err) {
@@ -94,14 +94,14 @@ class EventService {
     const currentSession = session ?? await mongoose.startSession();
     if (ownSession) currentSession.startTransaction();
 
-    // Extract attendees from payload (if any)
-    const incoming = Array.isArray(updateData.attendees)
-      ? updateData.attendees
+    // Extract attendances from payload (if any)
+    const incoming = Array.isArray(updateData.attendances)
+      ? updateData.attendances
       : [];
 
     try {
-      // 1) Update basic fields (without touching attendees yet)
-      const { attendees, ...rest } = updateData;
+      // 1) Update basic fields (without touching attendances yet)
+      const { attendances, ...rest } = updateData;
       let event = await Event.findByIdAndUpdate(
         eventId,
         rest,
@@ -116,9 +116,9 @@ class EventService {
         });
       }
 
-      // 2) Process each incoming attendee
-      const attendeeIds = [];
-      const attendeesResponse = [];
+      // 2) Process each incoming attendance
+      const attendanceIds = [];
+      const attendancesResponse = [];
 
       for (const a of incoming) {
         // a) Create/update affiliate
@@ -127,15 +127,15 @@ class EventService {
           true,                  // Force update if already exists
           currentSession
         );
-        attendeesResponse.push(affResp);
+        attendancesResponse.push(affResp);
 
         if (!affResp.success) {
           // If fails, we let it pass (or you could abort if preferred)
           continue;
         }
 
-        // b) Upsert in Attendee
-        const attDoc = await Attendee.findOneAndUpdate(
+        // b) Upsert in Attendance
+        const attDoc = await Attendance.findOneAndUpdate(
           { event: event._id, affiliate: affResp.data._id },
           {
             $set: {
@@ -150,11 +150,11 @@ class EventService {
             session: currentSession
           }
         );
-        attendeeIds.push(attDoc._id);
+        attendanceIds.push(attDoc._id);
       }
 
-      // 3) Overwrite event.attendees and save
-      event.attendees = attendeeIds;
+      // 3) Overwrite event.attendances and save
+      event.attendances = attendanceIds;
       await event.save({ session: currentSession });
 
       if (ownSession) await currentSession.commitTransaction();
@@ -163,7 +163,7 @@ class EventService {
         success: true,
         status: "UPDATED",
         message: "event.updated",
-        data: { event, attendeesResponse }
+        data: { event, attendancesResponse }
       });
 
     } catch (err) {
@@ -265,13 +265,13 @@ class EventService {
         });
       }
 
-      const attendees = await Attendee.find({ event: eventId }).session(currentSession);
+      const attendances = await Attendance.find({ event: eventId }).session(currentSession);
       const report = {
-        totalAttendees: attendees.length,
-        confirmed: attendees.filter(a => a.confirmed).length,
-        notConfirmed: attendees.filter(a => !a.confirmed).length,
-        attended: attendees.filter(a => a.attended).length,
-        confirmedButDidNotAttend: attendees.filter(a => a.confirmed && !a.attended).length
+        totalAttendances: attendances.length,
+        confirmed: attendances.filter(a => a.confirmed).length,
+        notConfirmed: attendances.filter(a => !a.confirmed).length,
+        attended: attendances.filter(a => a.attended).length,
+        confirmedButDidNotAttend: attendances.filter(a => a.confirmed && !a.attended).length
       };
 
       if (!session) await currentSession.commitTransaction();

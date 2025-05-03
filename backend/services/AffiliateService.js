@@ -164,19 +164,19 @@ class AffiliateService {
 
       static async getEventReport(eventId) {
         try {
-          const attendees = await Attendee.find({ event: eventId });
+          const attendances = await Attendance.find({ event: eventId });
     
-          const confirmed = attendees.filter(a => a.confirmed).length;
-          const notConfirmed = attendees.filter(a => !a.confirmed).length;
-          const attended = attendees.filter(a => a.attended).length;
-          const confirmedButDidNotAttend = attendees.filter(a => a.confirmed && !a.attended).length;
+          const confirmed = attendances.filter(a => a.confirmed).length;
+          const notConfirmed = attendances.filter(a => !a.confirmed).length;
+          const attended = attendances.filter(a => a.attended).length;
+          const confirmedButDidNotAttend = attendances.filter(a => a.confirmed && !a.attended).length;
     
           return BuildMethodResponse({
             success: true,
             status: "Éxito",
             message: "Reporte de evento generado",
             data: {
-              totalAttendees: attendees.length,
+              totalAttendances: attendances.length,
               confirmed,
               notConfirmed,
               attended,
@@ -243,8 +243,8 @@ class AffiliateService {
             );
             if (!affiliate) return { success: false, message: "Affiliate not found" };
             // Avoid duplicate attendance
-            if (!affiliate.attendees.includes(userId)) {
-                affiliate.attendees.push(userId);
+            if (!affiliate.attendances.includes(userId)) {
+                affiliate.attendances.push(userId);
             }
             await affiliate.save({ session: currentSession });
             if (!session) await currentSession.commitTransaction();

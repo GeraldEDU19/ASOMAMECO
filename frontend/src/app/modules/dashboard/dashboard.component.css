@@ -1,0 +1,92 @@
+/* src/app/dashboard/dashboard.component.css */
+.dashboard-bg {
+  min-height: calc(100vh - 64px);
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-center {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  background-color: #ffffff;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333333;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px 0 rgba(30, 41, 59, 0.04);
+}
+.icon-card i {
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
+}
+.icon-card span {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.icon-card:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    gap: 1.2rem;
+  }
+  .icon-card {
+    width: 120px;
+    height: 120px;
+  }
+  .icon-card i {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-bg {
+    height: calc(100vh - 56px);
+    min-height: unset;
+    padding: 0.5rem 0.25rem;
+    overflow-y: auto;
+  }
+  .dashboard-center {
+    padding: 0;
+  }
+  .dashboard-grid {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    align-items: center;
+  }
+  .icon-card {
+    width: 90vw;
+    max-width: 320px;
+    height: 90px;
+    padding: 0.5rem 0;
+  }
+  .icon-card i {
+    font-size: 2rem;
+  }
+}
+  

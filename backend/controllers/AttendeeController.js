@@ -1,13 +1,13 @@
-const AttendeeService = require("../services/AttendeeService");
+const AttendanceService = require("../services/AttendanceService");
 
-const AttendeeController = {
+const AttendanceController = {
     sendConfirmationEmail: async (req, res) => {
         try {
             const { attendanceIds, eventId } = req.body;
             const acceptLanguage = req.headers['accept-language'] || 'en';
             const language = acceptLanguage.split('-')[0].toLowerCase();
             
-            await AttendeeService.sendConfirmationEmail(attendanceIds, eventId, language);
+            await AttendanceService.sendConfirmationEmail(attendanceIds, eventId, language);
             res.status(200).json({ success: true, message: "Emails sent successfully" });
         } catch (error) {
             console.log(error);
@@ -18,7 +18,7 @@ const AttendeeController = {
     validateAttendanceToken: async (req, res) => {
         try {
             const { token } = req.params;
-            const result = await AttendeeService.validateAttendanceToken(token);
+            const result = await AttendanceService.validateAttendanceToken(token);
 
             if (result.success) {
                 res.status(200).json(result);
@@ -34,7 +34,7 @@ const AttendeeController = {
     checkAttendanceToken: async (req, res) => {
         try {
             const { token } = req.params;
-            const result = await AttendeeService.checkAttendanceToken(token);
+            const result = await AttendanceService.checkAttendanceToken(token);
 
             if (result.success) {
                 res.status(200).json(result);
@@ -48,4 +48,4 @@ const AttendeeController = {
     }
 };
 
-module.exports = AttendeeController;
+module.exports = AttendanceController;

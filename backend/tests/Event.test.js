@@ -128,7 +128,7 @@ describe("Event Service Tests", () => {
     assertEqual("registerAttendance", {}, attendanceResp.success, true, "Attendance registration success");
 
     const updatedEvent = await Event.findById(createResp.data.event._id).session(session).lean();
-    expect(updatedEvent.attendees.map(id => id.toString())).toContain(fakeUserId.toString());
+    expect(updatedEvent.attendances.map(id => id.toString())).toContain(fakeUserId.toString());
   });
 
   it("should not register attendance for non-existing event", async () => {

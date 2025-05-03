@@ -5,21 +5,22 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HeaderComponent } from './shared/header/header.component';
-import { TokenService } from './services/token.service';
+import { TokenService } from './modules/services/token.service';
+import { LoadingService } from './services/loading.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule, HeaderComponent, RouterOutlet],
-  template: `
-    <app-header *ngIf="showHeader"></app-header>
-    <router-outlet></router-outlet>
-  `
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
 })
 export class AppComponent {
   private router      = inject(Router);
   private tokenService= inject(TokenService);
+  private loadingService = inject(LoadingService);
   showHeader           = false;
+  loading$ = this.loadingService.loading$;
 
   constructor() {
     this.router.events
