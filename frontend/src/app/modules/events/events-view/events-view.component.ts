@@ -72,8 +72,14 @@ export class EventsViewComponent implements OnInit {
   }
 
   onEdit(): void {
-    if (this.event?._id) {
+    if (this.event) {
       this.router.navigate(['/events/edit', this.event._id]);
+    }
+  }
+
+  onReport(): void {
+    if (this.event) {
+      this.router.navigate(['/events', this.event._id, 'report']);
     }
   }
 
