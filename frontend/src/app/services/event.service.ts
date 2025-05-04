@@ -17,7 +17,15 @@ export class EventService {
   }
 
   getEvent(id: string): Observable<EventResponse> {
-    return this.http.get<EventResponse>(`${this.apiUrl}/${id}`);
+    return this.http.get<EventResponse>(`${this.apiUrl}/search`, {
+      params: { _id: id }
+    });
+  }
+
+  getEventReport(id: string): Observable<EventResponse> {
+    return this.http.get<EventResponse>(`${this.apiUrl}/report`, {
+      params: { _id: id }
+    });
   }
 
   createEvent(event: Event): Observable<EventResponse> {
@@ -30,5 +38,11 @@ export class EventService {
 
   deleteEvent(id: string): Observable<EventResponse> {
     return this.http.delete<EventResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  search(query: string): Observable<EventResponse> {
+    return this.http.get<EventResponse>(`${this.apiUrl}/search`, {
+      params: { query }
+    });
   }
 } 

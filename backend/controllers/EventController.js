@@ -97,12 +97,14 @@ const EventController = {
   // Get event report
   getReport: async (req, res) => {
     try {
-      const eventId = req.params.id;
+      const eventId = req.query._id;
       const result = await EventService.getEventReport(eventId);
       const language = req.headers['accept-language'] || 'en';
       
       if (result.success) {
         res.status(200).json(global.TranslateResponse(result, language));
+      } else if (result.status === "NOT_FOUND") {
+        res.status(404).json(global.TranslateResponse(result, language));
       } else {
         res.status(400).json(global.TranslateResponse(result, language));
       }

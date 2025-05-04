@@ -19,7 +19,8 @@ export class EventsListComponent implements OnInit, OnDestroy {
   events: Event[] = [];
   filtered: Event[] = [];
   search: string = '';
-  loading = false;
+  loading: boolean = true;
+  error: string | null = null;
   private loadingSub?: Subscription;
 
   constructor(
@@ -41,14 +42,17 @@ export class EventsListComponent implements OnInit, OnDestroy {
     this.loadingService.show();
     this.eventService.getEvents().subscribe({
       next: (response: EventResponse) => {
-        if (response.success) {
+        if (response.success && response.data && Array.isArray(response.data)) {
           this.events = response.data;
           this.filtered = response.data;
+        } else {
+          this.error = 'No se pudieron cargar los eventos';
         }
         this.loadingService.hide();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading events:', error);
+        this.error = 'Error al cargar los eventos';
         this.loadingService.hide();
       }
     });
@@ -73,9 +77,11 @@ export class EventsListComponent implements OnInit, OnDestroy {
   }
 
   onEdit(event: Event) {
-    if (event._id) {
-      this.router.navigate(['/events/edit', event._id]);
-    }
+    this.router.navigate(['/events/edit', event._id]);
+  }
+
+  onView(event: Event) {
+    this.router.navigate(['/events/view', event._id]);
   }
 
   onDelete(event: Event) {

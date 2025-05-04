@@ -24,7 +24,7 @@
       <div
         *ngFor="let e of filtered"
         class="event-card"
-        (click)="onEdit(e)"
+        (click)="onView(e)"
       >
         <div class="event-card-header">
           <h3 class="event-title">{{ e.name }}</h3>
@@ -44,8 +44,8 @@
               <span class="info-value location-ellipsis" [title]="e.location">{{ e.location }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Asistentes:</span>
-              <span class="info-value">{{ e.attendees?.length || 0 }} personas</span>
+              <span class="info-label">Asistencias:</span>
+              <span class="info-value">{{ e.attendances.length || 0 }} Asociados</span>
             </div>
           </div>
           

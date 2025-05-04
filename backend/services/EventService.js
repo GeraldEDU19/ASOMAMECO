@@ -251,6 +251,7 @@ class EventService {
 
   // Get event report
   static async getEventReport(eventId, session = null) {
+    console.log(eventId)
     const currentSession = session || (await mongoose.startSession());
     if (!session) currentSession.startTransaction();
 
@@ -258,7 +259,7 @@ class EventService {
       const event = await Event.findById(eventId).session(currentSession);
       if (!event) {
         if (!session) await currentSession.abortTransaction();
-        return BuildMethodResponse({
+        return global.BuildMethodResponse({
           success: false,
           status: "NOT_FOUND",
           message: "event.not_found"
@@ -275,7 +276,7 @@ class EventService {
       };
 
       if (!session) await currentSession.commitTransaction();
-      return BuildMethodResponse({
+      return global.BuildMethodResponse({
         success: true,
         status: "SUCCESS",
         message: "event.report_generated",
@@ -283,7 +284,7 @@ class EventService {
       });
     } catch (error) {
       if (!session) await currentSession.abortTransaction();
-      return BuildMethodResponse({
+      return global.BuildMethodResponse({
         success: false,
         status: "FAILED",
         message: "event.report_failed",

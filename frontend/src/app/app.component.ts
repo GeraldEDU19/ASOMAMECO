@@ -1,5 +1,5 @@
 // src/app/app.component.ts
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter, switchMap } from 'rxjs/operators';
@@ -16,10 +16,12 @@ import { LoadingService } from './services/loading.service';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  private router      = inject(Router);
-  private tokenService= inject(TokenService);
+  private router = inject(Router);
+  private tokenService = inject(TokenService);
   private loadingService = inject(LoadingService);
-  showHeader           = false;
+  private cdr = inject(ChangeDetectorRef);
+  
+  showHeader = false;
   loading$ = this.loadingService.loading$;
 
   constructor() {
@@ -30,6 +32,7 @@ export class AppComponent {
           const skip = ['/', '/forgot-password', '/reset-password']
             .includes(e.urlAfterRedirects);
           this.showHeader = !skip;
+          this.cdr.detectChanges(); // Forzar la detección de cambios
           return skip ? of(true) : this.tokenService.validate();
         })
       )

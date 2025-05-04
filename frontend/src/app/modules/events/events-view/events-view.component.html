@@ -1,33 +1,80 @@
 <div class="event-view-container">
-  <div class="event-header">
-    <h1>{{ event.title }}</h1>
-    <div class="event-meta">
-      <span class="event-date">{{ event.date | date:'mediumDate' }}</span>
-      <span class="event-status" [class.active]="event.status === 'Activo'">
-        {{ event.status }}
-      </span>
-    </div>
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
   </div>
 
-  <div class="event-details">
-    <div class="detail-group">
-      <h3>Descripción</h3>
-      <p>{{ event.description }}</p>
-    </div>
+  <ng-container *ngIf="!loading && event">
+    <div class="card">
+      <div class="event-header">
+        <h1>{{ event.name }}</h1>
+        <div class="event-actions">
+          <button class="btn btn-icon" (click)="onBack()" title="Volver">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <button class="btn btn-icon" (click)="onEdit()" title="Editar">
+            <i class="bi bi-pencil"></i>
+          </button>
+        </div>
+      </div>
 
-    <div class="detail-group">
-      <h3>Ubicación</h3>
-      <p>{{ event.location }}</p>
-    </div>
+      <div class="event-details">
+        <div class="detail-row">
+          <div class="detail-item">
+            <i class="bi bi-calendar-event"></i>
+            <span>{{ event.date | date:'medium' }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="bi bi-geo-alt"></i>
+            <span>{{ event.location }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="bi bi-people"></i>
+            <span>{{ event.attendances?.length || 0 }} Asociados</span>
+          </div>
+        </div>
+        <div class="detail-item description">
+          <i class="bi bi-card-text"></i>
+          <span>{{ event.description }}</span>
+        </div>
+      </div>
 
-    <div class="detail-group">
-      <h3>Asistentes</h3>
-      <p>{{ event.attendees }} personas</p>
+      <div class="attendances-section">
+        <h2>Lista de Afiliados</h2>
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (ngModelChange)="filterAttendances()"
+            placeholder="Buscar por nombre o ID externo..."
+          >
+        </div>
+        <div class="attendances-list">
+          <div *ngFor="let attendance of filteredAttendances" class="attendance-item">
+            <div class="attendance-info">
+              <div class="affiliate-name">{{ attendance.affiliate.fullName }}</div>
+              <div class="affiliate-details">
+                <span class="detail">
+                  <i class="bi bi-person-badge"></i>
+                  {{ attendance.affiliate.externalId }}
+                </span>
+                <span class="detail">
+                  <i class="bi bi-envelope"></i>
+                  {{ attendance.affiliate.email }}
+                </span>
+              </div>
+            </div>
+            <div class="attendance-status">
+              <span class="status" [class.confirmed]="attendance.confirmed">
+                {{ attendance.confirmed ? 'Confirmado' : 'Pendiente' }}
+              </span>
+              <span class="status" [class.attended]="attendance.attended">
+                {{ attendance.attended ? 'Asistió' : 'No asistió' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div class="event-actions">
-    <a [routerLink]="['/events/edit', event.id]" class="button button-primary">Editar Evento</a>
-    <a routerLink="/events" class="button button-secondary">Volver a la lista</a>
-  </div>
+  </ng-container>
 </div> 

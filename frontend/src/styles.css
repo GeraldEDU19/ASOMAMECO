@@ -8,12 +8,15 @@
 
 html, body {
   height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
   background-color: #f0f2f5;
   padding-top: 0;
+  margin: 0;
+  position: relative;
 }
 
 .popup-center {
@@ -78,6 +81,8 @@ body {
   line-height: 1.5;
   color: var(--text-color);
   background-color: var(--gray-ultralight);
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* Typography */
@@ -145,6 +150,7 @@ input:focus, textarea:focus, select:focus {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--spacing-lg);
+  box-sizing: border-box;
 }
 
 .text-center {
@@ -164,6 +170,8 @@ input:focus, textarea:focus, select:focus {
 .mb-5 { margin-bottom: var(--spacing-xl); }
 
 .app-main-content {
+  width: 100%;
+  box-sizing: border-box;
   height: calc(100vh - 64px);
   overflow: auto;
   padding: var(--spacing-lg);

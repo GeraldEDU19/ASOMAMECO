@@ -10,12 +10,22 @@ export interface Event {
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
+  capacity: number;
+  status: string;
 }
 
 export interface EventResponse {
   controlled: boolean;
-  data: Event[];
+  data: Event[] | EventReport;
   message: string;
   status: string;
   success: boolean;
+}
+
+export interface EventReport {
+  totalAttendances: number;
+  confirmed: number;
+  notConfirmed: number;
+  attended: number;
+  confirmedButDidNotAttend: number;
 } 
