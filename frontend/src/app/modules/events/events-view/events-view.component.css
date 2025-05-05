@@ -128,42 +128,48 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
 }
 
 .attendances-section h2 {
-  margin-bottom: var(--spacing-sm);
-  color: var(--text-color);
+  margin-bottom: 10px;
+  color: var(--text-color-secondary);
   font-size: 1.1rem;
 }
 
 .search-box {
   position: relative;
-  margin-bottom: var(--spacing-sm);
-}
-
-.search-box i {
-  position: absolute;
-  left: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
+  margin-bottom: 10px;
 }
 
 .search-box input {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) calc(var(--spacing-md) * 2 + 1rem);
+  padding: 8px 8px 8px 30px;
   border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  font-size: 1rem;
+  border-radius: 4px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.search-box .bi-search {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-secondary);
 }
 
 .attendances-list {
-  flex: 1;
+  max-height: 400px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding-right: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px;
+  background-color: var(--background-color-light);
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--background-color);
 }
 
 .attendances-list::-webkit-scrollbar {
@@ -171,77 +177,108 @@
 }
 
 .attendances-list::-webkit-scrollbar-track {
-  background: var(--gray-ultralight);
+  background: var(--background-color);
   border-radius: 4px;
 }
 
 .attendances-list::-webkit-scrollbar-thumb {
-  background: var(--gray);
+  background-color: var(--primary-color);
   border-radius: 4px;
-}
-
-.attendances-list::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-dark);
+  border: 2px solid var(--background-color);
 }
 
 .attendance-item {
-  background: white;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: var(--spacing-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.attendance-item:last-child {
+  border-bottom: none;
 }
 
 .attendance-info {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .affiliate-name {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-color);
-  margin-bottom: var(--spacing-xs);
 }
 
 .affiliate-details {
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
   display: flex;
-  gap: var(--spacing-md);
-  color: var(--text-secondary);
+  gap: 10px;
+  margin-top: 3px;
 }
 
-.detail {
+.affiliate-details .detail {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.detail i {
-  font-size: 1rem;
+  gap: 4px;
 }
 
 .attendance-status {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: 10px;
+  font-size: 0.8rem;
 }
 
 .status {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  padding: 3px 8px;
+  border-radius: 12px;
   font-weight: 500;
-  background: var(--gray-light);
-  color: var(--text-secondary);
 }
 
-.status.confirmed {
-  background: var(--success-light);
-  color: var(--success);
-}
-
+.status.confirmed,
 .status.attended {
-  background: var(--info-light);
-  color: var(--info);
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status:not(.confirmed):not(.attended) {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.printing-mode .attendances-list {
+  max-height: none !important;
+  overflow: visible !important;
+  height: auto !important;
+  border: none;
+}
+
+.printing-mode .search-box {
+  display: none !important;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printableArea, #printableArea * {
+    visibility: visible;
+  }
+  #printableArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .event-actions, .search-box {
+    display: none;
+  }
+  .attendances-list {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    border: none;
+  }
 }
 
 .info {
@@ -828,5 +865,66 @@
   
   .event-title {
     font-size: 1.25rem;
+  }
+}
+
+/* --- Printing Mode Styles --- */
+
+/* Apply to the main printable element (#printableArea which is the card) */
+.card.printing-mode {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  box-shadow: none !important; /* Optional: remove shadow */
+}
+
+/* Apply to the section containing the list */
+.card.printing-mode .attendances-section {
+  flex: none !important;         /* Disable flex sizing */
+  overflow: visible !important; /* Show all content */
+  height: auto !important;     /* Let it grow */
+}
+
+/* Existing rule for the list itself (keep as is) */
+.card.printing-mode .attendances-list {
+  max-height: none !important;
+  overflow: visible !important;
+  height: auto !important;
+  border: none !important;
+}
+
+/* Hide search box */
+.card.printing-mode .search-box {
+  display: none !important;
+}
+
+/* Hide action buttons */
+.card.printing-mode .event-actions {
+  display: none !important;
+}
+
+/* --- End Printing Mode Styles --- */
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printableArea, #printableArea * {
+    visibility: visible;
+  }
+  #printableArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .event-actions, .search-box {
+    display: none;
+  }
+  .attendances-list {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    border: none;
   }
 } 

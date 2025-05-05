@@ -1,29 +1,33 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { EventService, EventReportData } from '../../../services/event.service';
 import { LoadingService } from '../../../services/loading.service';
 import { CanvasJSAngularChartsModule } from '@canvasjs/angular-charts';
 import { Event } from '../../../models/event.model';
 import { Subscription } from 'rxjs';
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import { generateReportPdfContent } from '../../../utils/pdf-report-generator';
 
 @Component({
   selector: 'app-events-report',
   standalone: true,
   imports: [CommonModule, FormsModule, CanvasJSAngularChartsModule],
   templateUrl: './events-report.component.html',
-  styleUrls: ['./events-report.component.css']
+  styleUrls: ['./events-report.component.css'],
+  providers: [DatePipe]
 })
 export class EventsReportComponent implements OnInit, OnDestroy {
   event: Event | null = null;
   report: EventReportData | null = null;
   error: string | null = null;
   chart: any;
-  currentDate: string;
+  currentDate = new Date();
   loading: boolean = true;
   private loadingSub?: Subscription;
+  private eventSubscription: Subscription | null = null;
+  private reportSubscription: Subscription | null = null;
 
   pieChartOptions = {
     theme: "light2",
@@ -53,20 +57,9 @@ export class EventsReportComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private eventService: EventService,
-    private loadingService: LoadingService
-  ) {
-    // Obtener la fecha actual en UTC y formatearla a la zona horaria local
-    const now = new Date();
-    this.currentDate = now.toLocaleString('es-ES', {
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  }
+    public loadingService: LoadingService,
+    private datePipe: DatePipe
+  ) {}
 
   ngOnInit() {
     this.loadingSub = this.loadingService.loading$.subscribe(
@@ -77,6 +70,11 @@ export class EventsReportComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.loadingSub?.unsubscribe();
+    this.eventSubscription?.unsubscribe();
+    this.reportSubscription?.unsubscribe();
+    if (this.chart) {
+      this.chart.destroy();
+    }
   }
 
   getChartInstance(chart: object) {
@@ -92,13 +90,11 @@ export class EventsReportComponent implements OnInit, OnDestroy {
 
     this.loadingService.show();
 
-    // Cargar información del evento
     this.eventService.getEvent(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           if (Array.isArray(response.data) && response.data.length > 0) {
             this.event = response.data[0] as unknown as Event;
-            // Una vez que tenemos el evento, cargamos el reporte
             this.loadReport(id);
           } else {
             console.error('Invalid event response format:', response);
@@ -121,12 +117,13 @@ export class EventsReportComponent implements OnInit, OnDestroy {
 
   loadReport(id: string) {
     this.eventService.getEventReport(id).subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
-          this.report = response.data;
+      next: (reportResponse: { success: boolean, data: EventReportData }) => {
+        if (reportResponse.success && reportResponse.data) {
+          this.report = reportResponse.data;
+          console.log('Report data loaded:', this.report);
           this.updateChartData();
         } else {
-          console.error('Invalid report response:', response);
+          console.error('Invalid report response:', reportResponse);
           this.error = 'No se pudo cargar el reporte';
         }
         this.loadingService.hide();
@@ -140,13 +137,21 @@ export class EventsReportComponent implements OnInit, OnDestroy {
   }
 
   updateChartData() {
-    if (!this.report) return;
+    if (!this.report) {
+      console.warn('updateChartData called but report is null');
+      return;
+    }
+    console.log('Updating chart data...');
+    const confirmed = this.report.confirmed ?? 0;
+    const notConfirmed = this.report.notConfirmed ?? 0;
+    const attended = this.report.attended ?? 0;
+    const confirmedButDidNotAttend = this.report.confirmedButDidNotAttend ?? 0;
 
     const dataPoints = [
-      { y: this.report.confirmed, name: "Confirmados" },
-      { y: this.report.notConfirmed, name: "No Confirmados" },
-      { y: this.report.attended, name: "Asistieron" },
-      { y: this.report.confirmedButDidNotAttend, name: "Confirmados pero no asistieron" }
+      { y: confirmed, name: "Confirmados" },
+      { y: notConfirmed, name: "No Confirmados" },
+      { y: attended, name: "Asistieron" },
+      { y: confirmedButDidNotAttend, name: "Confirmados pero no asistieron" }
     ];
 
     this.pieChartOptions.data[0].dataPoints = dataPoints;
@@ -165,86 +170,37 @@ export class EventsReportComponent implements OnInit, OnDestroy {
     }
   }
 
-  async onPrint() {
+  onPrint(): void {
+    console.log('jsPDF onPrint started...');
+    if (!this.event || !this.report) {
+      console.error('Cannot generate PDF: Event or Report data is missing.');
+      return;
+    }
+
+    this.loadingService.show();
+
     try {
-      this.loadingService.show();
+      const doc = new jsPDF('p', 'mm', 'a4');
       
-      // Obtener el elemento a imprimir
-      const element = document.querySelector('.card');
-      if (!element) {
-        throw new Error('No se encontró el elemento a imprimir');
-      }
+      generateReportPdfContent(
+          doc,
+          this.event, 
+          this.report,
+          this.chart, 
+          this.datePipe,
+          this.currentDate
+      );
 
-      // Convertir el chart a imagen
-      if (this.chart) {
-        try {
-          const chartContainer = document.querySelector('.chart-container');
-          if (chartContainer) {
-            // Obtener la imagen del chart
-            const chartImage = this.chart.chart.canvas.toDataURL('image/png');
-            
-            // Crear una imagen temporal
-            const img = document.createElement('img');
-            img.src = chartImage;
-            img.style.width = '100%';
-            img.style.height = '300px';
-            
-            // Reemplazar el chart con la imagen
-            const canvasElement = chartContainer.querySelector('canvas');
-            if (canvasElement) {
-              canvasElement.style.display = 'none';
-              chartContainer.appendChild(img);
-            }
-          }
-        } catch (chartError) {
-          console.error('Error al procesar el chart:', chartError);
-          // Continuar con la generación del PDF incluso si falla el procesamiento del chart
-        }
-      }
+      const eventNameForFile: string = this.event.name ?? 'evento';
+      const safeEventName: string = eventNameForFile.replace(/[^a-zA-Z0-9]/g, '_');
+      doc.save(`reporte_${safeEventName}.pdf`);
+      console.log('PDF save initiated.');
 
-      // Configuración del PDF
-      const opt = {
-        margin: 1,
-        filename: `reporte-${this.event?.name}-${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'letter', 
-          orientation: 'portrait'
-        }
-      };
+      this.loadingService.hide();
 
-      // Generar y descargar el PDF
-      const worker = html2pdf().set(opt).from(element);
-      await worker.save();
-
-      // Restaurar el chart original
-      if (this.chart) {
-        try {
-          const chartContainer = document.querySelector('.chart-container');
-          if (chartContainer) {
-            const canvasElement = chartContainer.querySelector('canvas');
-            const imgElement = chartContainer.querySelector('img');
-            if (canvasElement && imgElement) {
-              canvasElement.style.display = 'block';
-              imgElement.remove();
-            }
-          }
-        } catch (restoreError) {
-          console.error('Error al restaurar el chart:', restoreError);
-        }
-      }
     } catch (error) {
-      console.error('Error detallado al generar el PDF:', error);
-      this.error = 'Error al generar el reporte PDF. Por favor, intente nuevamente.';
-    } finally {
+      console.error("Error during PDF generation process:", error);
+      this.error = "Error al generar el PDF. Ver consola.";
       this.loadingService.hide();
     }
   }

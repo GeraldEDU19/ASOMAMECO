@@ -4,7 +4,7 @@
   </div>
 
   <ng-container *ngIf="!loading && event">
-    <div class="card">
+    <div class="card" id="printableArea">
       <div class="event-header">
         <h1>{{ event.name }}</h1>
         <div class="event-actions">
@@ -16,6 +16,9 @@
           </button>
           <button class="btn btn-icon" (click)="onEdit()" title="Editar">
             <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-icon" (click)="onPrint()" title="Imprimir / Descargar PDF">
+            <i class="bi bi-printer"></i>
           </button>
         </div>
       </div>
@@ -32,7 +35,7 @@
           </div>
           <div class="detail-item">
             <i class="bi bi-people"></i>
-            <span>{{ event.attendances?.length || 0 }} Asociados</span>
+            <span>{{ event.attendances.length || 0 }} Asociados</span>
           </div>
         </div>
         <div class="detail-item description">

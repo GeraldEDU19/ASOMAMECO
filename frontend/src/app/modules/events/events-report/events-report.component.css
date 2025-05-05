@@ -323,4 +323,31 @@
     width: 100%;
     margin: 0;
   }
-} 
+}
+
+/* --- Printing Mode Styles --- */
+
+/* Apply to the main printable element */
+.report-container.printing-mode {
+  height: auto !important;
+  overflow: visible !important;
+  background-color: white !important; /* Ensure background for capture */
+  padding: 0 !important; /* Adjust padding if needed */
+}
+
+/* Hide buttons in printing mode */
+.report-container.printing-mode .report-header .btn,
+.report-container.printing-mode .header-left .btn-icon,
+.report-container.printing-mode .header-right .btn-icon {
+  display: none !important;
+}
+
+/* Ensure chart container is visible */
+.report-container.printing-mode .chart-container {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* You might need specific overrides for chart canvas if it misbehaves */
+
+/* --- End Printing Mode Styles --- */ 
