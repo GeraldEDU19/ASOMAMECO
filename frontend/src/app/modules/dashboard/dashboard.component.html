@@ -4,16 +4,18 @@
     <div class="dashboard-grid">
       <a routerLink="/events" class="icon-card">
         <i class="bi bi-calendar-event"></i>
-        <span>Eventos</span>
+        <span>{{ 'dashboard.events' | translate }}</span>
       </a>
-      <a routerLink="/affiliate" class="icon-card">
+      <a routerLink="/affiliates" class="icon-card">
         <i class="bi bi-people"></i>
-        <span>Afiliados</span>
+        <span>{{ 'dashboard.affiliates' | translate }}</span>
       </a>
+      <!-- Temporarily disabled until user management is implemented
       <a routerLink="/users" class="icon-card">
         <i class="bi bi-person-badge"></i>
-        <span>Usuarios</span>
+        <span>{{ 'dashboard.users' | translate }}</span>
       </a>
+      -->
     </div>
   </div>
 </div>

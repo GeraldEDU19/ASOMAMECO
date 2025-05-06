@@ -24,6 +24,7 @@ const UserController = {
       const response = await UserService.login(email, password);
       const language = req.headers['accept-language'] || 'en';
       return res.status(200).json(global.TranslateResponse(response, language));
+      
     } catch (error) {
       console.log(error);
       const language = req.headers['accept-language'] || 'en';

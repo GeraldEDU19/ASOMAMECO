@@ -7,11 +7,17 @@ import { Event, EventResponse } from '../../../models/event.model';
 import { TruncatePipe } from '../../../pipes/truncate.pipe';
 import { LoadingService } from '../../../services/loading.service';
 import { Subscription } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-events-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TruncatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TruncatePipe,
+    TranslateModule
+  ],
   templateUrl: './events-list.component.html',
   styleUrls: ['./events-list.component.css']
 })

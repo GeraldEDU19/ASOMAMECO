@@ -42,6 +42,7 @@ class UserService {
       
       if (!user) return global.BuildMethodResponse({
         success: false,
+        controlled: true,
         status: 'INVALID_DATA',
         message: "user.invalid_credentials"
       });
@@ -49,6 +50,7 @@ class UserService {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return global.BuildMethodResponse({
         success: false,
+        controlled: true,
         status: 'INVALID_DATA',
         message: "user.invalid_credentials"
       });

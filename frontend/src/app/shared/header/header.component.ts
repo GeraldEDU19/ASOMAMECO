@@ -1,56 +1,59 @@
 // src/app/shared/header/header.component.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router, RouterModule, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { LanguageService } from '../../services/language.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
-  template: `
-    <header class="main-header">
-      <div class="header-content">
-        <button class="menu-toggle" (click)="menuOpen = !menuOpen" aria-label="Menú" type="button">
-          <span [class.open]="menuOpen">☰</span>
-        </button>
-        <div class="brand-center">
-          <a class="brand" routerLink="/dashboard">ASOMAMECO</a>
-        </div>
-        <div class="user-avatar" title="Usuario">
-          <span>👤</span>
-        </div>
-      </div>
-      <nav class="nav-links-wrapper" [class.open]="menuOpen" (click)="$event.stopPropagation()">
-        <div class="menu-user-section">
-          <div class="menu-user-info">
-            <span class="menu-user-avatar">👤</span>
-            <span class="menu-user-name">Usuario</span>
-          </div>
-          <button class="menu-logout-btn" (click)="logout()">Cerrar sesión</button>
-        </div>
-        <div class="nav-links">
-          <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMenu()">Dashboard</a>
-          <a routerLink="/events"    routerLinkActive="active" (click)="closeMenu()">Eventos</a>
-          <a routerLink="/affiliate" routerLinkActive="active" (click)="closeMenu()">Afiliados</a>
-          <a routerLink="/users"     routerLinkActive="active" (click)="closeMenu()">Usuarios</a>
-        </div>
-      </nav>
-      <div class="menu-backdrop" *ngIf="menuOpen" (click)="closeMenu()"></div>
-    </header>
-  `,
+  imports: [
+    CommonModule, 
+    RouterModule, 
+    RouterLinkActive,
+    FormsModule,
+    TranslateModule
+  ],
+  templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   menuOpen = false;
-  userMenuOpen = false;
+  currentLanguage: string = 'en';
 
-  closeMenu() {
-    this.menuOpen = false;
-    this.userMenuOpen = false;
+  constructor(
+    private router: Router,
+    private languageService: LanguageService,
+    private translate: TranslateService
+  ) {}
+
+  ngOnInit(): void {
+    this.currentLanguage = this.languageService.getCurrentLanguage();
+    this.languageService.getCurrentLanguageObservable().subscribe(lang => {
+      this.currentLanguage = lang;
+    });
   }
-  logout() {
-    // Aquí iría la lógica real de logout
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  closeMenu(): void {
+    this.menuOpen = false;
+  }
+
+  onLanguageChange(language: string): void {
+    this.languageService.setLanguage(language);
     this.closeMenu();
-    alert('Sesión cerrada');
+  }
+
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.closeMenu();
+    this.router.navigate(['/login']);
+    alert(this.translate.instant('header.logout'));
   }
 }

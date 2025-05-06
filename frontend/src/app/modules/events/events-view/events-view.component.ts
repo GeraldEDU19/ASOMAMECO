@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,21 +6,30 @@ import { EventService } from '../../../services/event.service';
 import { Event, EventResponse } from '../../../models/event.model';
 import { LoadingService } from '../../../services/loading.service';
 import { Attendance } from '../../../models/attendance.model';
+import { Subscription } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-events-view',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    TranslateModule
+  ],
   templateUrl: './events-view.component.html',
   styleUrls: ['./events-view.component.css']
 })
-export class EventsViewComponent implements OnInit {
+export class EventsViewComponent implements OnInit, OnDestroy {
   event: Event | null = null;
   loading = false;
   searchTerm = '';
   filteredAttendances: Attendance[] = [];
+  private routeSub: Subscription | undefined;
+  private loadingSub: Subscription | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -31,6 +40,11 @@ export class EventsViewComponent implements OnInit {
 
   ngOnInit() {
     this.loadEvent();
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+    this.loadingSub?.unsubscribe();
   }
 
   loadEvent() {

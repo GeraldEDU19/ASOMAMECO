@@ -1,4 +1,221 @@
-body {
-    background-color: #f0f2f5;
-  }
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #f0f2f5; /* Fondo gris claro similar a muchas apps */
+}
+
+.login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.login-container {
+  background-color: #ffffff;
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  border: 1px solid #e2e8f0; /* Borde sutil */
+}
+
+.login-header {
+  margin-bottom: 2rem;
+}
+
+.login-logo {
+  height: 40px; /* Ajusta según tu logo */
+  margin-bottom: 1rem;
+}
+
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #1e293b; /* Color de texto oscuro */
+  margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+  font-size: 1rem;
+  color: #64748b; /* Color de texto secundario */
+}
+
+.login-form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1e293b;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #cbd5e1;
+  appearance: none;
+  border-radius: 8px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+.form-control:focus {
+  color: #1e293b;
+  background-color: #fff;
+  border-color: #3b82f6; /* Azul primario */
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+/* Para inputs inválidos (opcional, requiere lógica TS) */
+.form-control.is-invalid {
+  border-color: #ef4444; /* Rojo para errores */
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+}
+
+/* Contenedor para posicionar el botón */
+.password-input-container {
+  position: relative;
+}
+
+/* Estilos del botón de mostrar/ocultar contraseña */
+.password-toggle-btn {
+  position: absolute;
+  top: 50%; /* Centrar verticalmente relativo al contenedor (que ahora solo tiene el input) */
+  right: 0.5rem;
+  transform: translateY(-50%); /* Ajuste fino para centrado vertical perfecto */
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b; /* Color secundario */
+  z-index: 3; /* Asegurar que esté sobre el input */
+}
+
+.password-toggle-btn:hover {
+  color: #1e293b; /* Color primario oscuro */
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.password-toggle-btn .bi {
+  font-size: 1.2rem; /* Tamaño del icono */
+  vertical-align: middle;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.forgot-password-link {
+  font-size: 0.875rem;
+  color: #3b82f6; /* Azul primario */
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+  color: #1d4ed8; /* Azul más oscuro */
+  text-decoration: underline;
+}
+
+.language-selector .form-select {
+  padding: 0.3rem 1.5rem 0.3rem 0.5rem; /* Ajuste para tamaño sm */
+  font-size: 0.875rem;
+  border-radius: 6px;
+  background-color: #f8fafc; /* Fondo ligeramente diferente */
+  border-color: #e2e8f0;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #fff;
+  background-color: #3b82f6; /* Azul primario */
+  border: 1px solid transparent;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb; /* Azul un poco más oscuro */
+}
+
+.btn-primary:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.5);
+}
+
+.btn-primary:disabled {
+  background-color: #94a3b8;
+  border-color: #94a3b8;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.spinner-border-sm {
+  width: 1em;
+  height: 1em;
+  border-width: 0.15em;
+}
+
+/* Toast styles */
+.toast-container {
+  z-index: 1200;
+}
+
+.toast {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.toast-body {
+  padding: 1rem;
+}
+
+.text-bg-danger {
+  background-color: #dc3545 !important; /* Bootstrap danger */
+  color: #fff;
+}
+
+.btn-close-white {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
   

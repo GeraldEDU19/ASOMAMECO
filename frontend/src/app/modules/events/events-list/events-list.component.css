@@ -103,11 +103,10 @@
 }
 
 .event-description {
-  color: #475569;
-  line-height: 1.5;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
 }
 
 .event-card-footer {

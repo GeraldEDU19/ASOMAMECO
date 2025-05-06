@@ -1,0 +1,135 @@
+<div *ngIf="isLoading || isSaving" class="loading-overlay">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<div class="card container py-4 mt-4" *ngIf="!isLoading"> <!-- Hide card content while initial loading -->
+  <div class="card-header">
+    <h2 class="mb-0 h5">{{ (isEditMode ? 'affiliates.form.editTitle' : 'affiliates.form.newTitle') | translate }}</h2>
+  </div>
+
+  <div class="card-body">
+    <form [formGroup]="affiliateForm" (ngSubmit)="onSubmit()" novalidate class="mt-3">
+
+      <!-- External ID -->
+      <div class="mb-3">
+        <label for="externalId" class="form-label">{{ 'affiliates.form.externalIdLabel' | translate }}</label>
+        <input
+          type="text"
+          id="externalId"
+          class="form-control"
+          formControlName="externalId"
+          [ngClass]="{ 'is-invalid': affiliateForm.get('externalId')?.invalid && affiliateForm.get('externalId')?.touched }"
+        />
+        <div *ngIf="affiliateForm.get('externalId')?.hasError('required') && affiliateForm.get('externalId')?.touched" class="invalid-feedback">
+          {{ 'affiliates.form.validationRequired' | translate : { field: ('affiliates.form.externalIdLabel' | translate) } }}
+        </div>
+      </div>
+
+      <!-- First Name -->
+      <div class="mb-3">
+        <label for="firstName" class="form-label">{{ 'affiliates.form.firstNameLabel' | translate }}</label>
+        <input
+          type="text"
+          id="firstName"
+          class="form-control"
+          formControlName="firstName"
+          [ngClass]="{ 'is-invalid': affiliateForm.get('firstName')?.invalid && affiliateForm.get('firstName')?.touched }"
+        />
+        <div *ngIf="affiliateForm.get('firstName')?.hasError('required') && affiliateForm.get('firstName')?.touched" class="invalid-feedback">
+           {{ 'affiliates.form.validationRequired' | translate : { field: ('affiliates.form.firstNameLabel' | translate) } }}
+        </div>
+      </div>
+
+      <!-- Second Name -->
+      <div class="mb-3">
+        <label for="secondName" class="form-label">{{ 'affiliates.form.secondNameLabel' | translate }}</label>
+        <input
+          type="text"
+          id="secondName"
+          class="form-control"
+          formControlName="secondName"
+        />
+         <!-- No validation needed for optional field -->
+      </div>
+
+      <!-- First Last Name -->
+      <div class="mb-3">
+        <label for="firstLastName" class="form-label">{{ 'affiliates.form.firstLastNameLabel' | translate }}</label>
+        <input
+          type="text"
+          id="firstLastName"
+          class="form-control"
+          formControlName="firstLastName"
+          [ngClass]="{ 'is-invalid': affiliateForm.get('firstLastName')?.invalid && affiliateForm.get('firstLastName')?.touched }"
+        />
+        <div *ngIf="affiliateForm.get('firstLastName')?.hasError('required') && affiliateForm.get('firstLastName')?.touched" class="invalid-feedback">
+          {{ 'affiliates.form.validationRequired' | translate : { field: ('affiliates.form.firstLastNameLabel' | translate) } }}
+        </div>
+      </div>
+
+      <!-- Second Last Name -->
+      <div class="mb-3">
+        <label for="secondLastName" class="form-label">{{ 'affiliates.form.secondLastNameLabel' | translate }}</label>
+        <input
+          type="text"
+          id="secondLastName"
+          class="form-control"
+          formControlName="secondLastName"
+          [ngClass]="{ 'is-invalid': affiliateForm.get('secondLastName')?.invalid && affiliateForm.get('secondLastName')?.touched }"
+        />
+        <div *ngIf="affiliateForm.get('secondLastName')?.hasError('required') && affiliateForm.get('secondLastName')?.touched" class="invalid-feedback">
+          {{ 'affiliates.form.validationRequired' | translate : { field: ('affiliates.form.secondLastNameLabel' | translate) } }}
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-3">
+        <label for="email" class="form-label">{{ 'affiliates.form.emailLabel' | translate }}</label>
+        <input
+          type="email"
+          id="email"
+          class="form-control"
+          formControlName="email"
+          [ngClass]="{ 'is-invalid': affiliateForm.get('email')?.invalid && affiliateForm.get('email')?.touched }"
+        />
+        <div *ngIf="affiliateForm.get('email')?.hasError('email') && affiliateForm.get('email')?.touched" class="invalid-feedback">
+           {{ 'affiliates.form.validationEmail' | translate }}
+        </div>
+      </div>
+
+      <!-- Telephone Number -->
+      <div class="mb-3">
+        <label for="telephoneNumber" class="form-label">{{ 'affiliates.form.phoneLabel' | translate }}</label>
+        <input
+          type="tel" 
+          id="telephoneNumber"
+          class="form-control"
+          formControlName="telephoneNumber"
+          [ngClass]="{ 'is-invalid': affiliateForm.get('telephoneNumber')?.invalid && affiliateForm.get('telephoneNumber')?.touched }"
+        />
+        <div *ngIf="affiliateForm.get('telephoneNumber')?.hasError('required') && affiliateForm.get('telephoneNumber')?.touched" class="invalid-feedback">
+           {{ 'affiliates.form.validationRequired' | translate : { field: ('affiliates.form.phoneLabel' | translate) } }}
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="d-flex justify-content-end gap-2">
+        <a routerLink="/affiliates/list" class="btn btn-secondary">
+            <i class="bi bi-x-lg me-1"></i>
+            {{ 'affiliates.form.cancelButton' | translate }}
+        </a>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+          <span *ngIf="!isSaving">
+            <i class="bi bi-check-lg me-1"></i>
+            {{ (isEditMode ? 'affiliates.form.saveButton' : 'affiliates.form.createButton') | translate }}
+          </span>
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          <span *ngIf="isSaving">{{ 'affiliates.form.savingButton' | translate }}</span>
+        </button>
+      </div>
+
+    </form>
+  </div> <!-- /.card-body -->
+</div> <!-- /.card --> 

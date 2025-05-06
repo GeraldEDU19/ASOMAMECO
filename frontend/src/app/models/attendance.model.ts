@@ -1,8 +1,14 @@
 export interface Affiliate {
   _id: string;
-  fullName: string;
+  fullName?: string;
   externalId: string;
-  email: string;
+  firstName?: string;
+  secondName?: string;
+  firstLastName?: string;
+  secondLastName?: string;
+  email?: string;
+  telephoneNumber?: string;
+  active?: boolean;
 }
 
 export interface Attendance {

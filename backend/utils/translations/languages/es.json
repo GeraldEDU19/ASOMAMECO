@@ -19,7 +19,8 @@
       "token_invalid": "Token inválido o expirado",
       "token_valid": "Token válido",
       "token_missing": "Token no proporcionado"
-    }
+    },
+    "general_error": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde o contacta con soporte."
   },
   "email": {
     "eventConfirmation": {

@@ -1,0 +1,64 @@
+<!-- Loading Skeleton -->
+<div *ngIf="isLoading" class="card">
+  <div class="card-body text-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Affiliate Details Card -->
+<div *ngIf="!isLoading && affiliate" class="card container py-4 mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0 h5">{{ 'affiliates.view.title' | translate }}</h2>
+    <div>
+      <a [routerLink]="['/affiliates/edit', affiliate._id]" class="btn btn-sm btn-outline-primary me-2">
+        <i class="bi bi-pencil me-1"></i>
+        {{ 'affiliates.view.editButton' | translate }}
+      </a>
+       <a routerLink="/affiliates/list" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        {{ 'affiliates.view.backButton' | translate }}
+      </a>
+    </div>
+  </div>
+
+  <div class="card-body mt-3">
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-md-6">
+        <dl class="row">
+          <dt class="col-sm-4">{{ 'affiliates.view.externalIdLabel' | translate }}</dt>
+          <dd class="col-sm-8">{{ affiliate.externalId }}</dd>
+
+          <dt class="col-sm-4">{{ 'affiliates.view.fullNameLabel' | translate }}</dt>
+          <dd class="col-sm-8">{{ affiliate.fullName }}</dd>
+
+          <dt class="col-sm-4">{{ 'affiliates.view.emailLabel' | translate }}</dt>
+          <dd class="col-sm-8">{{ affiliate.email || '-' }}</dd>
+        </dl>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-md-6">
+         <dl class="row">
+          <dt class="col-sm-4">{{ 'affiliates.view.phoneLabel' | translate }}</dt>
+          <dd class="col-sm-8">{{ affiliate.telephoneNumber }}</dd>
+
+          <dt class="col-sm-4">{{ 'affiliates.view.statusLabel' | translate }}</dt>
+          <dd class="col-sm-8">
+             <span class="badge" [ngClass]="affiliate.active ? 'text-bg-success' : 'text-bg-secondary'">
+                {{ affiliate.active ? ('affiliates.view.statusActive' | translate) : ('affiliates.view.statusInactive' | translate) }}
+              </span>
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Not Found State -->
+<div *ngIf="!isLoading && !affiliate" class="alert alert-warning text-center" role="alert">
+  <i class="bi bi-exclamation-triangle fs-3 me-2"></i>
+  {{ 'affiliates.view.notFound' | translate }}
+</div> 

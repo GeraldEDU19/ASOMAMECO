@@ -1,0 +1,84 @@
+<!-- Placeholder for Affiliates List -->
+<div class="affiliates-list-container container py-4">
+
+  <!-- Loading indicator using global style -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+    <!-- Header with search and create button -->
+    <div class="affiliates-header">
+      <div class="search-box">
+        <input
+          type="text"
+          class="form-control search-input"
+          placeholder="{{ 'affiliates.list.searchPlaceholder' | translate }}"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="filterAffiliates()"
+        />
+        <button class="btn btn-primary" routerLink="../create">
+          <i class="bi bi-plus-lg me-1"></i>
+          {{ 'affiliates.list.createButton' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid for affiliate cards -->
+    <div class="affiliates-grid" *ngIf="filteredAffiliates.length > 0">
+      <div
+        *ngFor="let affiliate of filteredAffiliates"
+        class="affiliate-card"
+        [routerLink]="['../view', affiliate._id]"
+      >
+        <div class="affiliate-card-header">
+          <h3 class="affiliate-title" [title]="affiliate.fullName">{{ affiliate.fullName }}</h3>
+          <span class="affiliate-status" [class.active]="affiliate.active">
+            {{ (affiliate.active ? 'affiliates.list.statusActive' : 'affiliates.list.statusInactive') | translate }}
+          </span>
+        </div>
+        
+        <div class="affiliate-card-body">
+          <div class="affiliate-info">
+            <div class="info-item">
+              <span class="info-label">{{ 'affiliates.list.headerExternalId' | translate }}:</span>
+              <span class="info-value value-ellipsis" [title]="affiliate.externalId || 'N/A'">{{ affiliate.externalId || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'affiliates.list.headerEmail' | translate }}:</span>
+              <span class="info-value value-ellipsis" [title]="affiliate.email || ('affiliates.list.noEmail' | translate)">{{ affiliate.email || ('affiliates.list.noEmail' | translate) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'affiliates.list.headerPhone' | translate }}:</span>
+              <span class="info-value value-ellipsis" [title]="affiliate.telephoneNumber || 'N/A'">{{ affiliate.telephoneNumber || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="affiliate-card-footer">
+          <button
+            class="btn btn-sm btn-outline-primary"
+            [routerLink]="['../edit', affiliate._id]"
+            (click)="$event.stopPropagation()"
+            [title]="'affiliates.list.editButton' | translate">
+            <i class="bi bi-pencil me-1"></i>
+            {{ 'affiliates.list.editButton' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!isLoading && filteredAffiliates.length === 0" class="empty-state">
+      <div class="empty-state-icon">👥</div>
+      <h3>{{ 'affiliates.list.emptyStateTitle' | translate }}</h3>
+      <p>{{ 'affiliates.list.emptyStateSubtitle' | translate }}</p>
+      <button class="btn btn-primary" routerLink="../create">
+        <i class="bi bi-plus-lg me-1"></i>
+        {{ 'affiliates.list.createButton' | translate }}
+      </button>
+    </div>
+  </ng-container>
+</div> 

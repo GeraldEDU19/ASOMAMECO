@@ -1,222 +1,222 @@
-<div class="form-container">
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="form-group">
-      <label>Nombre</label>
-      <input class="form-input" formControlName="name" [class.error]="form.get('name')?.invalid && form.get('name')?.touched" />
-      <div class="error-message" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">Campo requerido.</div>
-    </div>
-    <div class="form-group">
-      <label>Fecha y Hora</label>
-      <input type="datetime-local" class="form-input" formControlName="date" [class.error]="form.get('date')?.invalid && form.get('date')?.touched" />
-      <div class="error-message" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">Campo requerido.</div>
-    </div>
-    <div class="form-group">
-      <label>Descripción</label>
-      <textarea class="form-input" formControlName="description" [class.error]="form.get('description')?.invalid && form.get('description')?.touched"></textarea>
-      <div class="error-message" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">Campo requerido.</div>
-    </div>
-    <div class="form-group">
-      <label>Ubicación</label>
-      <input class="form-input" formControlName="location" [class.error]="form.get('location')?.invalid && form.get('location')?.touched" />
-      <div class="error-message" *ngIf="form.get('location')?.invalid && form.get('location')?.touched">Campo requerido.</div>
-    </div>
-    <div class="form-check">
-      <input type="checkbox" class="form-checkbox" formControlName="active" />
-      <label>Activo</label>
-    </div>
-    <div class="form-check">
-      <input
-        type="checkbox"
-        class="form-checkbox"
-        [checked]="updateFlag"
-        (change)="updateFlag = $any($event.target).checked"
-      />
-      <label>Actualizar afiliados existentes</label>
-    </div>
+<div class="events-form-container">
+  <div class="card" *ngIf="!isProcessing">
+    <h2 class="mb-4">{{ isNew ? ('eventsForm.titleCreate' | translate) : ('eventsForm.titleEdit' | translate) }}</h2>
 
-    <!-- Carga de Excel -->
-    <div class="form-group file-upload">
-      <label>Excel afiliados</label>
-      <input type="file" (change)="onExcelFile($event)" accept=".xlsx" />
-      <div *ngIf="loadingExcel" class="loading-spinner"></div>
-    </div>
-    <div *ngIf="excelToast" class="toast toast-{{ excelToastType }}">
-      {{ excelToastMessage }}
-    </div>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-group mb-3">
+        <label>{{ 'eventsForm.nameLabel' | translate }}</label>
+        <input class="form-control" formControlName="name" [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched" />
+        <div class="invalid-feedback" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">{{ 'eventsForm.nameRequired' | translate }}</div>
+      </div>
 
-    <!-- Selección manual de afiliados -->
-    <button type="button" class="button button-secondary" (click)="openAffiliatesModal()">
-      Seleccionar afiliados
-    </button>
+      <div class="form-group mb-3">
+        <label>{{ 'eventsForm.dateLabel' | translate }}</label>
+        <input type="datetime-local" class="form-control" formControlName="date" [class.is-invalid]="form.get('date')?.invalid && form.get('date')?.touched" />
+        <div class="invalid-feedback" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">{{ 'eventsForm.dateRequired' | translate }}</div>
+      </div>
 
-    <!-- Lista de afiliados seleccionados -->
-    <ul class="attendees-list">
-      <li
-        *ngFor="let s of selectedAttendances; let i = index"
-        class="attendee-item"
-        (click)="openEditAffiliateModal(i)"
-      >
-        <div class="attendee-info">
-          <strong>{{ s.attendance.affiliate.fullName }}</strong>
-          <small>ID: {{ s.attendance.affiliate.externalId }} | Email: {{ s.attendance.affiliate.email || 'N/A' }}</small>
+      <div class="form-group mb-3">
+        <label>{{ 'eventsForm.descriptionLabel' | translate }}</label>
+        <textarea class="form-control" formControlName="description" [class.is-invalid]="form.get('description')?.invalid && form.get('description')?.touched"></textarea>
+        <div class="invalid-feedback" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">{{ 'eventsForm.descriptionRequired' | translate }}</div>
+      </div>
+
+      <div class="form-group mb-3">
+        <label>{{ 'eventsForm.locationLabel' | translate }}</label>
+        <input class="form-control" formControlName="location" [class.is-invalid]="form.get('location')?.invalid && form.get('location')?.touched" />
+        <div class="invalid-feedback" *ngIf="form.get('location')?.invalid && form.get('location')?.touched">{{ 'eventsForm.locationRequired' | translate }}</div>
+      </div>
+
+      <div class="mb-3">
+        <button type="button" class="btn btn-outline-secondary" (click)="openAffiliatesModal()">
+          {{ 'eventsForm.selectAffiliatesButton' | translate }}
+        </button>
+      </div>
+
+      <!-- Show message only when editing an event that initially had 0 attendees -->
+      <div *ngIf="!isNew && initialAttendances && initialAttendances.length === 0" class="alert alert-secondary text-center mt-3 mb-3">
+         {{ 'eventsForm.noAttendeesInitially' | translate }}
+      </div>
+
+      <div *ngIf="selectedAttendances.length > 0" class="mb-3">
+          <h5 class="mb-2">{{ 'eventsForm.selectedAttendeesTitle' | translate }}</h5>
+          <ul class="list-group">
+            <li
+              *ngFor="let s of selectedAttendances; let i = index"
+              class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2"
+            >
+              <div class="attendee-info flex-grow-1" (click)="openEditAffiliateModal(i)" style="cursor: pointer;">
+                <strong>{{ s.attendance.affiliate.fullName }}</strong>
+                <small class="d-block text-muted">ID: {{ s.attendance.affiliate.externalId }} | Email: {{ s.attendance.affiliate.email || 'N/A' }}</small>
+              </div>
+              <div class="attendee-actions d-flex align-items-center gap-3">
+                <div class="form-check form-switch" (click)="$event.stopPropagation()">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="confirmCheck{{i}}"
+                    [checked]="s.attendance.confirmed"
+                    (change)="toggleConfirm(i)"
+                  />
+                  <label class="form-check-label" for="confirmCheck{{i}}">
+                    {{ (s.attendance.confirmed ? 'eventsForm.statusConfirmed' : 'eventsForm.statusNotConfirmed') | translate }}
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="removeAffiliate(i); $event.stopPropagation()"
+                  [title]="'eventsForm.removeAffiliateTooltip' | translate"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </li>
+          </ul>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button class="btn btn-secondary" type="button" (click)="onCancel()" [disabled]="isProcessing">
+          {{ 'eventsForm.cancelButton' | translate }}
+        </button>
+        <button class="btn btn-primary" type="submit" [disabled]="form.invalid || isProcessing">
+          <span *ngIf="isProcessing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          {{ isProcessing ? ('eventsForm.processingButton' | translate) : (isNew ? ('eventsForm.createButton' | translate) : ('eventsForm.updateButton' | translate)) }}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<div *ngIf="showResultModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showResultModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" [ngClass]="resultIsError ? 'bg-danger text-white' : 'bg-success text-white'">
+        <h5 class="modal-title">{{ resultIsError ? ('eventsForm.resultModalErrorTitle' | translate) : ('eventsForm.resultModalSuccessTitle' | translate) }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showResultModal = false" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ resultMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showResultModal = false">{{ 'eventsForm.closeButton' | translate }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showConflictModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showConflictModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+   <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title">{{ 'eventsForm.conflictModalTitle' | translate }}</h5>
         </div>
-        <div class="attendee-actions">
-          <div class="form-check" (click)="$event.stopPropagation()">
-            <input
-              class="form-checkbox"
-              type="checkbox"
-              [checked]="s.attendance.confirmed"
-              (change)="toggleConfirm(i)"
-            />
-            <label>
-              {{ s.attendance.confirmed ? 'Confirmado' : 'No confirmado' }}
-            </label>
-          </div>
-          <div class="form-check" (click)="$event.stopPropagation()">
-            <input
-              class="form-checkbox"
-              type="checkbox"
-              [checked]="s.attendance.attended"
-              [disabled]="isNew"
-              (change)="toggleAttended(i)"
-            />
-            <label>
-              {{ s.attendance.attended ? 'Asistió' : 'No asistió' }}
-            </label>
-          </div>
-          <button
-            class="button button-danger"
-            (click)="removeAffiliate(i); $event.stopPropagation()"
+        <div class="modal-body">
+          <p>{{ 'eventsForm.conflictModalMessage' | translate }}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="confirmRetryUpdate(false)">{{ 'eventsForm.conflictModalOptionNo' | translate }}</button>
+          <button type="button" class="btn btn-primary" (click)="confirmRetryUpdate(true)">{{ 'eventsForm.conflictModalOptionYes' | translate }}</button>
+        </div>
+      </div>
+   </div>
+</div>
+
+<div *ngIf="showAffiliatesModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showAffiliatesModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title">{{ 'eventsForm.selectAffiliateModalTitle' | translate }}</h5>
+        <button type="button" class="btn-close" (click)="showAffiliatesModal = false" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input
+          class="form-control mb-3"
+          [placeholder]="'eventsForm.affiliateSearchPlaceholder' | translate"
+          [(ngModel)]="modalSearch"
+          (ngModelChange)="filterModal()"
+          [ngModelOptions]="{ standalone: true }"
+        />
+        <ul class="list-group affiliates-list">
+          <li
+            *ngFor="let a of filteredModalAffiliates"
+            class="list-group-item list-group-item-action"
+            (click)="addAffiliate(a)"
           >
-            Quitar
-          </button>
-        </div>
-      </li>
-    </ul>
-
-    <!-- Botones del formulario -->
-    <div class="form-actions">
-      <button class="button button-secondary" type="button" (click)="onCancel()" [disabled]="saving">
-        Cancelar
-      </button>
-      <button class="button button-primary" type="submit" [disabled]="saving">
-        <span *ngIf="saving" class="loading-spinner"></span>
-        Guardar Evento
-      </button>
-    </div>
-  </form>
-</div>
-
-<!-- Modal de resultado (éxito o error) -->
-<div *ngIf="showResultModal" class="modal-backdrop"></div>
-<div *ngIf="showResultModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>{{ resultIsError ? 'Error' : 'Éxito' }}</h3>
-      <button type="button" class="modal-close" (click)="showResultModal = false">×</button>
-    </div>
-    <div class="modal-body">
-      <p>{{ resultMessage }}</p>
-    </div>
-    <div class="modal-footer">
-      <button class="button button-primary" (click)="showResultModal = false">Cerrar</button>
+            {{ a.fullName }} - ID: {{ a.externalId }} - Email: {{ a.email || 'N/A' }}
+          </li>
+           <li *ngIf="filteredModalAffiliates.length === 0 && modalSearch" class="list-group-item text-muted">
+              {{ 'eventsForm.noAffiliatesFound' | translate }}
+           </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Modal de conflicto para attendances repetidos -->
-<div *ngIf="showConflictModal" class="modal-backdrop"></div>
-<div *ngIf="showConflictModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Conflicto de Afiliados</h3>
-    </div>
-    <div class="modal-body">
-      <p>Uno o varios afiliados ya existen en el evento. ¿Desea actualizarlos o no incluirlos?</p>
-    </div>
-    <div class="modal-footer">
-      <button class="button button-secondary" (click)="confirmRetryUpdate(false)">No incluirlos</button>
-      <button class="button button-primary" (click)="confirmRetryUpdate(true)">Actualizar afiliados</button>
+<div *ngIf="showAffiliateModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showAffiliateModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title">{{ 'eventsForm.editAffiliateModalTitle' | translate }}</h5>
+        <button type="button" class="btn-close" (click)="closeAffiliateModal()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="affiliateForm">
+          <div class="form-group mb-3">
+            <label class="form-label">{{ 'eventsForm.externalIdLabel' | translate }}</label>
+            <input class="form-control" formControlName="externalId" />
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+               <label class="form-label">{{ 'eventsForm.firstNameLabel' | translate }}</label>
+               <input class="form-control" formControlName="firstName" />
+            </div>
+             <div class="col">
+               <label class="form-label">{{ 'eventsForm.secondNameLabel' | translate }}</label>
+               <input class="form-control" formControlName="secondName" />
+            </div>
+          </div>
+           <div class="row mb-3">
+            <div class="col">
+               <label class="form-label">{{ 'eventsForm.firstLastNameLabel' | translate }}</label>
+               <input class="form-control" formControlName="firstLastName" />
+            </div>
+             <div class="col">
+               <label class="form-label">{{ 'eventsForm.secondLastNameLabel' | translate }}</label>
+               <input class="form-control" formControlName="secondLastName" />
+            </div>
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">{{ 'eventsForm.emailLabel' | translate }}</label>
+            <input type="email" class="form-control" formControlName="email" />
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">{{ 'eventsForm.telephoneLabel' | translate }}</label>
+            <input type="tel" class="form-control" formControlName="telephoneNumber" />
+          </div>
+          <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" formControlName="active" />
+            <label class="form-check-label">{{ 'eventsForm.activeLabel' | translate }}</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAffiliateModal()">{{ 'eventsForm.cancelButton' | translate }}</button>
+        <button type="button" class="btn btn-primary" (click)="saveAffiliateChanges()">{{ 'eventsForm.saveChangesButton' | translate }}</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Modal para seleccionar afiliados -->
-<div *ngIf="showAffiliatesModal" class="modal-backdrop"></div>
-<div *ngIf="showAffiliatesModal" class="modal modal-lg">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Buscar afiliados</h3>
-      <button type="button" class="modal-close" (click)="showAffiliatesModal = false">×</button>
-    </div>
-    <div class="modal-body">
-      <input
-        class="form-input"
-        placeholder="Buscar..."
-        [(ngModel)]="modalSearch"
-        (ngModelChange)="filterModal()"
-        [ngModelOptions]="{ standalone: true }"
-      />
-      <ul class="affiliates-list">
-        <li
-          *ngFor="let a of filteredModalAffiliates"
-          class="affiliate-item"
-          (click)="addAffiliate(a)"
-        >
-          {{ a.fullName }} - ID: {{ a.externalId }} - Email: {{ a.email || 'N/A' }}
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para editar afiliado seleccionado -->
-<div *ngIf="showAffiliateModal" class="modal-backdrop"></div>
-<div *ngIf="showAffiliateModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Editar Afiliado</h3>
-      <button type="button" class="modal-close" (click)="closeAffiliateModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <form [formGroup]="affiliateForm">
-        <div class="form-group">
-          <label>External ID</label>
-          <input class="form-input" formControlName="externalId" />
-        </div>
-        <div class="form-group">
-          <label>Primer Nombre</label>
-          <input class="form-input" formControlName="firstName" />
-        </div>
-        <div class="form-group">
-          <label>Segundo Nombre</label>
-          <input class="form-input" formControlName="secondName" />
-        </div>
-        <div class="form-group">
-          <label>Primer Apellido</label>
-          <input class="form-input" formControlName="firstLastName" />
-        </div>
-        <div class="form-group">
-          <label>Segundo Apellido</label>
-          <input class="form-input" formControlName="secondLastName" />
-        </div>
-        <div class="form-group">
-          <label>Correo</label>
-          <input class="form-input" formControlName="email" />
-        </div>
-        <div class="form-group">
-          <label>Teléfono</label>
-          <input class="form-input" formControlName="telephoneNumber" />
-        </div>
-        <div class="form-check">
-          <input type="checkbox" class="form-checkbox" formControlName="active" />
-          <label>Activo</label>
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button class="button button-secondary" (click)="closeAffiliateModal()">Cancelar</button>
-      <button class="button button-primary" (click)="saveAffiliateChanges()">Guardar cambios</button>
-    </div>
+<div *ngIf="isProcessing" class="loading-overlay">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">{{ 'eventsForm.processingSr' | translate }}</span>
   </div>
 </div> 

@@ -1,1 +1,48 @@
-<p>header works!</p>
+<header class="main-header">
+  <div class="header-content">
+    <button class="menu-toggle" (click)="toggleMenu()" [attr.aria-label]="'Toggle Menu' | translate" type="button">
+      <!-- Usar la clase .open para la animación del icono si existe -->
+      <span [class.open]="menuOpen">☰</span>
+    </button>
+    <div class="brand-center">
+      <a class="brand" routerLink="/dashboard">{{ 'header.title' | translate }}</a>
+    </div>
+    <div class="header-right">
+      <!-- Volver a solo el Avatar de Usuario aquí -->
+      <div class="user-avatar" title="Usuario"> 
+        <span>👤</span>
+      </div>
+    </div>
+  </div>
+  <!-- Menú Desplegable -->
+  <nav class="nav-links-wrapper" [class.open]="menuOpen" (click)="$event.stopPropagation()">
+    <div class="menu-user-section">
+      <div class="menu-user-info">
+        <span class="menu-user-avatar">👤</span>
+        <span class="menu-user-name">Usuario</span> 
+      </div>
+      <button class="menu-logout-btn" (click)="logout()">{{ 'header.logout' | translate }}</button>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMenu()">{{ 'header.dashboard' | translate }}</a> 
+      <a routerLink="/events"    routerLinkActive="active" (click)="closeMenu()">{{ 'dashboard.events' | translate }}</a>
+      <a routerLink="/affiliate" routerLinkActive="active" (click)="closeMenu()">{{ 'dashboard.affiliates' | translate }}</a>
+      <a routerLink="/users"     routerLinkActive="active" (click)="closeMenu()">{{ 'dashboard.users' | translate }}</a>
+    </div>
+    <!-- Sección para el Selector de Idioma dentro del menú -->
+    <div class="menu-language-section">
+      <label for="language-select-menu" class="visually-hidden">{{ 'header.language' | translate }}</label>
+      <select 
+        id="language-select-menu"
+        class="language-select-menu" 
+        [(ngModel)]="currentLanguage" 
+        (ngModelChange)="onLanguageChange($event)" 
+        [attr.aria-label]="'header.language' | translate"
+      >
+        <option value="en">{{ 'header.english' | translate }}</option>
+        <option value="es">{{ 'header.spanish' | translate }}</option>
+      </select>
+    </div>
+  </nav>
+  <div class="menu-backdrop" *ngIf="menuOpen" (click)="closeMenu()"></div>
+</header>

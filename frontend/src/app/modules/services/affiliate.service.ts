@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../core/api/api.service';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  status: string;
+  message: string;
+  data: T;
+}
 
 export interface Affiliate {
   _id?: string;
@@ -19,15 +27,30 @@ export interface Affiliate {
 export class AffiliateService {
   constructor(private api: ApiService) {}
 
-  getAll(): Observable<{ success: boolean; status: string; data: Affiliate[] }> {
-    return this.api.get('api/affiliates/search');
+  search(query?: any): Observable<ApiResponse<Affiliate[]>> {
+    return this.api.get<ApiResponse<Affiliate[]>>('api/affiliates/search', query);
   }
 
-  create(a: Affiliate): Observable<any> {
-    return this.api.post('api/affiliates', a);
+  getAll(): Observable<ApiResponse<Affiliate[]>> {
+    return this.search();
   }
 
-  update(id: string, a: Affiliate): Observable<any> {
-    return this.api.put(`api/affiliates/${id}`, a);
+  getById(id: string): Observable<ApiResponse<Affiliate | null>> {
+    return this.search({ _id: id }).pipe(
+      map(response => {
+        const affiliate = (response.success && Array.isArray(response.data) && response.data.length > 0)
+                          ? response.data[0]
+                          : null;
+        return { ...response, data: affiliate };
+      })
+    );
+  }
+
+  create(a: Affiliate): Observable<ApiResponse<Affiliate>> {
+    return this.api.post<ApiResponse<Affiliate>>('api/affiliates', a);
+  }
+
+  update(id: string, a: Affiliate): Observable<ApiResponse<Affiliate>> {
+    return this.api.put<ApiResponse<Affiliate>>(`api/affiliates/${id}`, a);
   }
 }

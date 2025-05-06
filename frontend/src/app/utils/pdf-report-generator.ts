@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import { DatePipe } from '@angular/common';
-import { Event, EventReport } from '../models/event.model'; // Adjust path as needed
+import { Event, EventReport } from '../models/event.model'; // Ajustar ruta
 
 // --- Style Constants for Formal Report ---
 const COLORS = {
@@ -67,13 +67,13 @@ function drawStatisticsTable(doc: jsPDF, report: EventReport, startY: number): n
     doc.setTextColor(COLORS.text);
 
     let currentX = tableStartX;
-    doc.text('Métrica', currentX + SPACING.tableCellPaddingX, currentY + rowHeight / 1.5, { baseline: 'middle' });
+    doc.text("Metric", currentX + SPACING.tableCellPaddingX, currentY + rowHeight / 1.5, { baseline: 'middle' });
     currentX += colWidths[0];
-    doc.line(currentX, currentY, currentX, currentY + headerHeight); // Vertical line
-    doc.text('Valor', currentX + SPACING.tableCellPaddingX, currentY + rowHeight / 1.5, { baseline: 'middle' });
+    doc.line(currentX, currentY, currentX, currentY + headerHeight);
+    doc.text("Value", currentX + SPACING.tableCellPaddingX, currentY + rowHeight / 1.5, { baseline: 'middle' });
     currentX += colWidths[1];
-    doc.line(currentX, currentY, currentX, currentY + headerHeight); // Vertical line
-    doc.text('Porcentaje', currentX + SPACING.tableCellPaddingX, currentY + rowHeight / 1.5, { baseline: 'middle' });
+    doc.line(currentX, currentY, currentX, currentY + headerHeight);
+    doc.text("Percentage", currentX + SPACING.tableCellPaddingX, currentY + rowHeight / 1.5, { baseline: 'middle' });
     
     currentY += headerHeight;
 
@@ -89,11 +89,11 @@ function drawStatisticsTable(doc: jsPDF, report: EventReport, startY: number): n
     };
 
     const tableData = [
-        { metric: 'Total Invitados', value: totalAttendances, percentage: '100%' },
-        { metric: 'Confirmados', value: report.confirmed ?? 0, percentage: getPercentage(report.confirmed) },
-        { metric: 'No Confirmados', value: report.notConfirmed ?? 0, percentage: getPercentage(report.notConfirmed) },
-        { metric: 'Asistieron', value: report.attended ?? 0, percentage: getPercentage(report.attended) },
-        { metric: 'Confirmaron, No Asistieron', value: report.confirmedButDidNotAttend ?? 0, percentage: getPercentage(report.confirmedButDidNotAttend) }
+        { metric: "Total Invited", value: totalAttendances, percentage: '100%' },
+        { metric: "Confirmed", value: report.confirmed ?? 0, percentage: getPercentage(report.confirmed) },
+        { metric: "Not Confirmed", value: report.notConfirmed ?? 0, percentage: getPercentage(report.notConfirmed) },
+        { metric: "Attended", value: report.attended ?? 0, percentage: getPercentage(report.attended) },
+        { metric: "Confirmed, Did Not Attend", value: report.confirmedButDidNotAttend ?? 0, percentage: getPercentage(report.confirmedButDidNotAttend) }
     ];
 
     tableData.forEach((row, index) => {
@@ -125,7 +125,7 @@ function drawStatisticsTable(doc: jsPDF, report: EventReport, startY: number): n
     return currentY; // Return the Y position after the table
 }
 
-
+// Función principal
 export function generateReportPdfContent(
     doc: jsPDF,
     event: Event,
@@ -143,20 +143,56 @@ export function generateReportPdfContent(
     doc.setFont(defaultFont, 'bold');
     doc.setFontSize(FONT_SIZES.title);
     doc.setTextColor(COLORS.text);
-    doc.text('Reporte de Evento', pageWidth / 2, currentY, { align: 'center' });
+    console.log(`DEBUG: Before printing report title. Y: ${currentY}`);
+    try {
+      doc.text("Event Report", pageWidth / 2, currentY, { align: 'center' }); 
+    } catch (e) {
+      console.error('ERROR printing reportTitle:', e);
+      throw e; 
+    }
+    console.log(`DEBUG: After printing report title.`);
     currentY += SPACING.baseLineHeight * 2;
     doc.setDrawColor(COLORS.border);
     doc.setLineWidth(0.3);
-    doc.line(SPACING.margin, currentY, pageWidth - SPACING.margin, currentY); // Separator line
+    doc.line(SPACING.margin, currentY, pageWidth - SPACING.margin, currentY); 
     currentY += SPACING.section;
 
     // --- Event Information ---
     doc.setFont(defaultFont, 'bold');
     doc.setFontSize(FONT_SIZES.h1);
     doc.setTextColor(COLORS.text);
-    const eventName: string = event.name ?? 'Evento sin nombre';
-    currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
-    doc.text(eventName, SPACING.margin, currentY); currentY += SPACING.item;
+    const originalEventName: string = event.name ?? 'Evento sin nombre';
+    const sanitizedEventName = originalEventName.replace(/[^a-zA-Z0-9 áéíóúÁÉÍÓÚñÑüÜ .,;:()-]/g, '');
+    
+    const eventNameLines: string[] = doc.splitTextToSize(sanitizedEventName, maxLineWidth);
+    currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight * eventNameLines.length);
+    
+    if (typeof currentY !== 'number' || !isFinite(currentY)) {
+        console.error(`ERROR: Invalid currentY value before printing event name: ${currentY}`);
+        currentY = SPACING.margin; 
+    }
+    console.log(`DEBUG: Before printing event name lines. currentY=${currentY}, lines=${eventNameLines.length}`);
+
+    // Imprimir línea por línea
+    eventNameLines.forEach((line: string) => {
+        if (typeof currentY !== 'number' || !isFinite(currentY)) {
+             console.error(`ERROR: Invalid currentY value inside loop: ${currentY}`);
+             return; 
+        }
+        console.log(`DEBUG: Printing line: '${line}', Y=${currentY}`);
+        // --- Re-establecer fuente explícitamente --- 
+        doc.setFont(defaultFont, 'bold'); 
+        doc.setFontSize(FONT_SIZES.h1); 
+        doc.setTextColor(COLORS.text);
+        // --- Fin re-establecer fuente --- 
+        try {
+          doc.text(line, SPACING.margin, currentY); 
+        } catch(e) {
+           console.error(`ERROR printing event name line: '${line}' at Y=${currentY}`, e);
+           throw e; // Re-lanzar para ver el error original
+        }
+        currentY += SPACING.baseLineHeight; 
+    });
 
     doc.setFont(defaultFont, 'normal');
     doc.setFontSize(FONT_SIZES.normal);
@@ -166,11 +202,11 @@ export function generateReportPdfContent(
     const totalText: string = (report.totalAttendances ?? 0).toString();
 
     currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
-    doc.text(`Fecha: ${transformedDate}`, SPACING.margin, currentY); currentY += SPACING.item;
+    doc.text(`Date: ${transformedDate}`, SPACING.margin, currentY); currentY += SPACING.item;
     currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
-    doc.text(`Lugar: ${locationText}`, SPACING.margin, currentY); currentY += SPACING.item;
+    doc.text(`Location: ${locationText}`, SPACING.margin, currentY); currentY += SPACING.item;
     currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
-    doc.text(`Total Asociados: ${totalText}`, SPACING.margin, currentY); currentY += SPACING.section;
+    doc.text(`Total Attendees: ${totalText}`, SPACING.margin, currentY); currentY += SPACING.section;
 
     // --- Description ---
     if (event.description) {
@@ -178,7 +214,7 @@ export function generateReportPdfContent(
         doc.setFont(defaultFont, 'bold');
         doc.setFontSize(FONT_SIZES.h2);
         doc.setTextColor(COLORS.text);
-        doc.text('Descripción:', SPACING.margin, currentY); currentY += SPACING.item;
+        doc.text("Description:", SPACING.margin, currentY); currentY += SPACING.item;
 
         doc.setFont(defaultFont, 'normal');
         doc.setFontSize(FONT_SIZES.normal);
@@ -197,7 +233,7 @@ export function generateReportPdfContent(
     doc.setFont(defaultFont, 'bold');
     doc.setFontSize(FONT_SIZES.h2);
     doc.setTextColor(COLORS.text);
-    doc.text('Estadísticas de Asistencia', SPACING.margin, currentY); currentY += SPACING.item * 1.5; // Space before table
+    doc.text("Attendance Statistics", SPACING.margin, currentY); currentY += SPACING.item * 1.5; // Space before table
 
     // --- Draw Statistics Table ---
     currentY = drawStatisticsTable(doc, report, currentY);
@@ -209,7 +245,7 @@ export function generateReportPdfContent(
         doc.setFont(defaultFont, 'bold');
         doc.setFontSize(FONT_SIZES.h2);
         doc.setTextColor(COLORS.text);
-        doc.text('Gráfico de Asistencia', pageWidth / 2, currentY, { align: 'center' });
+        doc.text("Attendance Chart", pageWidth / 2, currentY, { align: 'center' });
         currentY += SPACING.item * 1.5;
 
         console.log('Attempting to add chart canvas to PDF...');
@@ -222,16 +258,27 @@ export function generateReportPdfContent(
             let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
             const imgX = SPACING.margin + (maxLineWidth - imgWidth) / 2; // Centered
             
-            currentY = checkAddPage(doc, currentY, imgHeight);
-            doc.addImage(chartDataURL, 'PNG', imgX, currentY, imgWidth, imgHeight);
-            currentY += imgHeight + SPACING.section;
-            console.log('Chart added to PDF successfully.');
+            // --- ADD CHECK for valid dimensions ---
+            if (!isFinite(imgWidth) || !isFinite(imgHeight) || imgWidth <= 0 || imgHeight <= 0) {
+              console.error(`Invalid chart image dimensions calculated: width=${imgWidth}, height=${imgHeight}. Skipping chart.`);
+              currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
+              doc.setFont(defaultFont, 'italic'); doc.setFontSize(FONT_SIZES.small);
+              doc.setTextColor(COLORS.danger);
+              doc.text("Error rendering chart in PDF." + " (Invalid Dimensions)", SPACING.margin, currentY);
+              currentY += SPACING.section;
+            } else {
+              // --- END ADD CHECK ---
+              currentY = checkAddPage(doc, currentY, imgHeight);
+              doc.addImage(chartDataURL, 'PNG', imgX, currentY, imgWidth, imgHeight);
+              currentY += imgHeight + SPACING.section;
+              console.log('Chart added to PDF successfully.');
+            } // --- ADD closing brace for else ---
         } catch (e) {
             console.error("Error adding chart to PDF:", e);
             currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
             doc.setFont(defaultFont, 'italic'); doc.setFontSize(FONT_SIZES.small);
             doc.setTextColor(COLORS.danger);
-            doc.text('Error al renderizar el gráfico en el PDF.', SPACING.margin, currentY);
+            doc.text("Error rendering chart in PDF.", SPACING.margin, currentY);
             currentY += SPACING.section;
         }
     } else {
@@ -239,7 +286,7 @@ export function generateReportPdfContent(
         currentY = checkAddPage(doc, currentY, SPACING.baseLineHeight);
         doc.setFont(defaultFont, 'italic'); doc.setFontSize(FONT_SIZES.small);
         doc.setTextColor(COLORS.textSecondary);
-        doc.text('Gráfico no disponible.', SPACING.margin, currentY);
+        doc.text("Chart not available.", SPACING.margin, currentY);
         currentY += SPACING.section;
     }
 
@@ -247,9 +294,15 @@ export function generateReportPdfContent(
     doc.setFont(defaultFont, 'normal');
     doc.setTextColor(COLORS.textSecondary);
     const transformedTimestamp: string = datePipe.transform(currentDate, 'medium', 'local') ?? 'N/A';
-    const generationTimeStr = `Generado: ${transformedTimestamp}`;
+    const generationTimeStr = `Generated: ${transformedTimestamp}`;
     let footerY = pageHeight - SPACING.margin / 2;
     const requiredFooterSpace = SPACING.margin / 2 + FONT_SIZES.xsmall / 2;
+    // --- ADD CHECK for currentY before calculating footerY ---
+    if (!isFinite(currentY)) {
+        console.error(`ERROR: currentY became invalid (${currentY}) before footer calculation. Resetting to margin.`);
+        currentY = pageHeight - requiredFooterSpace - 1; // Place it just above the required space
+    }
+    // --- END ADD CHECK ---
     if (currentY > pageHeight - requiredFooterSpace) {
        if (currentY > pageHeight - SPACING.margin) { 
            footerY = pageHeight - SPACING.margin / 2;
@@ -257,6 +310,18 @@ export function generateReportPdfContent(
            footerY = currentY + SPACING.baseLineHeight;
        }
     }
+    // --- Reset font to default before setting size ---
+    doc.setFont(defaultFont, 'normal'); 
+    // --- End reset ---
     doc.setFontSize(FONT_SIZES.xsmall);
+    // --- ADD CHECK for footerY ---
+    if (!isFinite(footerY)) {
+        console.error(`ERROR: Calculated footerY is invalid (${footerY}). Using default value.`);
+        footerY = pageHeight - SPACING.margin / 2; // Default fallback
+    }
+    // --- END ADD CHECK ---
+    // --- ADD Clamp footerY to be within page bounds ---
+    footerY = Math.min(footerY, pageHeight - SPACING.margin / 2); // Ensure it's not past the bottom margin area
+    // --- END Clamp ---
     doc.text(generationTimeStr, SPACING.margin, footerY); 
 } 

@@ -8,6 +8,7 @@ class Translator {
   };
 
   static #defaultLanguage = 'en';
+  static #genericErrorKey = 'responses.general_error'; // Define the generic error key
 
   /**
    * Get a translated string based on the provided key and language
@@ -26,11 +27,22 @@ class Translator {
       if (result && typeof result === 'object') {
         result = result[k];
       } else {
-        return key; // Return the original key if translation not found
+        result = undefined; // Key path not fully found
+        break;
       }
     }
 
-    return result || key;
+    // If the result is not a string (translation not found or key points to an object)
+    if (typeof result !== 'string') {
+      // Avoid infinite loop if the generic key itself is missing
+      if (key === this.#genericErrorKey) {
+        return key; // Return the generic key itself if it cannot be translated
+      }
+      // Try to return the generic error message
+      return this.translate(this.#genericErrorKey, language);
+    }
+
+    return result;
   }
 
   /**
@@ -52,4 +64,5 @@ class Translator {
   }
 }
 
+module.exports = Translator; 
 module.exports = Translator; 

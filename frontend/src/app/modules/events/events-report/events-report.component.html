@@ -12,10 +12,10 @@
             <i class="bi bi-clock"></i>
             {{ currentDate | date:'mediumDate' }}
           </div>
-          <button class="btn btn-icon" (click)="onPrint()" title="Imprimir Reporte">
+          <button class="btn btn-icon" (click)="onPrint()" [title]="'eventsReport.printTooltip' | translate">
             <i class="bi bi-printer"></i>
           </button>
-          <button class="btn btn-icon" (click)="onBack()" title="Volver">
+          <button class="btn btn-icon" (click)="onBack()" [title]="'eventsReport.backTooltip' | translate">
             <i class="bi bi-arrow-left"></i>
           </button>
         </div>
@@ -37,7 +37,7 @@
           </div>
           <div class="detail-item">
             <i class="bi bi-people"></i>
-            <span>{{ report?.totalAttendances || 0 }} Asociados</span>
+            <span>{{ report?.totalAttendances || 0 }} {{ 'eventsReport.attendeesSuffix' | translate }}</span>
           </div>
         </div>
         <div class="detail-item description">
@@ -48,32 +48,32 @@
 
       <div *ngIf="!error && report" class="statistics-grid">
         <div class="stat-card">
-          <div class="stat-title">Total de Invitados</div>
+          <div class="stat-title">{{ 'eventsReport.totalInvited' | translate }}</div>
           <div class="stat-value">{{ report.totalAttendances }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-title">Confirmados</div>
+          <div class="stat-title">{{ 'eventsReport.confirmed' | translate }}</div>
           <div class="stat-value">{{ report.confirmed }}</div>
           <div class="stat-percentage">
             {{ (report.confirmed / report.totalAttendances) * 100 | number:'1.0-0' }}%
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-title">No Confirmados</div>
+          <div class="stat-title">{{ 'eventsReport.notConfirmed' | translate }}</div>
           <div class="stat-value">{{ report.notConfirmed }}</div>
           <div class="stat-percentage">
             {{ (report.notConfirmed / report.totalAttendances) * 100 | number:'1.0-0' }}%
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-title">Asistieron</div>
+          <div class="stat-title">{{ 'eventsReport.attended' | translate }}</div>
           <div class="stat-value">{{ report.attended }}</div>
           <div class="stat-percentage">
             {{ (report.attended / report.totalAttendances) * 100 | number:'1.0-0' }}%
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-title">Confirmados pero no asistieron</div>
+          <div class="stat-title">{{ 'eventsReport.confirmedNotAttended' | translate }}</div>
           <div class="stat-value">{{ report.confirmedButDidNotAttend }}</div>
           <div class="stat-percentage">
             {{ (report.confirmedButDidNotAttend / report.totalAttendances) * 100 | number:'1.0-0' }}%

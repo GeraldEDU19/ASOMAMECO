@@ -19,7 +19,8 @@
       "token_invalid": "Invalid or expired token",
       "token_valid": "Token is valid",
       "token_missing": "Token not provided"
-    }
+    },
+    "general_error": "An unexpected error occurred. Please try again later or contact support."
   },
   "email": {
     "eventConfirmation": {

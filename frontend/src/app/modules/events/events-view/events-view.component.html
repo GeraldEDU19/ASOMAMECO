@@ -8,16 +8,16 @@
       <div class="event-header">
         <h1>{{ event.name }}</h1>
         <div class="event-actions">
-          <button class="btn btn-icon" (click)="onBack()" title="Volver">
+          <button class="btn btn-icon" (click)="onBack()" [title]="'eventsView.backTooltip' | translate">
             <i class="bi bi-arrow-left"></i>
           </button>
-          <button class="btn btn-icon" (click)="onReport()" title="Reporte">
+          <button class="btn btn-icon" (click)="onReport()" [title]="'eventsView.reportTooltip' | translate">
             <i class="bi bi-graph-up"></i>
           </button>
-          <button class="btn btn-icon" (click)="onEdit()" title="Editar">
+          <button class="btn btn-icon" (click)="onEdit()" [title]="'eventsView.editTooltip' | translate">
             <i class="bi bi-pencil"></i>
           </button>
-          <button class="btn btn-icon" (click)="onPrint()" title="Imprimir / Descargar PDF">
+          <button class="btn btn-icon" (click)="onPrint()" [title]="'eventsView.printTooltip' | translate">
             <i class="bi bi-printer"></i>
           </button>
         </div>
@@ -35,7 +35,7 @@
           </div>
           <div class="detail-item">
             <i class="bi bi-people"></i>
-            <span>{{ event.attendances.length || 0 }} Asociados</span>
+            <span>{{ event.attendances.length || 0 }} {{ 'eventsView.attendeesSuffix' | translate }}</span>
           </div>
         </div>
         <div class="detail-item description">
@@ -44,18 +44,30 @@
         </div>
       </div>
 
-      <div class="attendances-section">
-        <h2>Lista de Afiliados</h2>
-        <div class="search-box">
+      <!-- Attendees Section - Only show if event is loaded -->
+      <div *ngIf="event" class="attendances-section">
+        <h3 class="mb-3">{{'eventsView.attendeesListTitle' | translate}}</h3>
+
+        <div class="search-container mb-3">
           <i class="bi bi-search"></i>
           <input 
             type="text" 
             [(ngModel)]="searchTerm" 
             (ngModelChange)="filterAttendances()"
-            placeholder="Buscar por nombre o ID externo..."
+            [placeholder]="'eventsView.searchPlaceholder' | translate"
           >
         </div>
-        <div class="attendances-list">
+
+        <!-- Show message if no attendees exist for the event (already checked event exists) -->
+        <div *ngIf="!event.attendances || event.attendances.length === 0" class="alert alert-secondary text-center mt-3">
+          {{ 'eventsView.noAttendees' | translate }}
+        </div>
+
+        <!-- Show list only if attendees exist (already checked event exists) -->
+        <div *ngIf="event.attendances && event.attendances.length > 0" class="attendances-list mt-3">
+          <div *ngIf="filteredAttendances.length === 0 && searchTerm" class="alert alert-info text-center">
+            No se encontraron afiliados que coincidan con la búsqueda.
+          </div>
           <div *ngFor="let attendance of filteredAttendances" class="attendance-item">
             <div class="attendance-info">
               <div class="affiliate-name">{{ attendance.affiliate.fullName }}</div>
@@ -72,10 +84,10 @@
             </div>
             <div class="attendance-status">
               <span class="status" [class.confirmed]="attendance.confirmed">
-                {{ attendance.confirmed ? 'Confirmado' : 'Pendiente' }}
+                {{ (attendance.confirmed ? 'eventsView.statusConfirmed' : 'eventsView.statusPending') | translate }}
               </span>
               <span class="status" [class.attended]="attendance.attended">
-                {{ attendance.attended ? 'Asistió' : 'No asistió' }}
+                {{ (attendance.attended ? 'eventsView.statusAttended' : 'eventsView.statusNotAttended') | translate }}
               </span>
             </div>
           </div>
